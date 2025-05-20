@@ -1,32 +1,30 @@
 <?php
 namespace modules\core\roteamento;
 
+use DateTime;
 use modules\core\atributos\HttpPost;
+use modules\core\validacoes\Token;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
 use modules\core\atributos\HttpGet;
+use ReflectionProperty;
 
 class Roteador
 {
     private array $rotas = [];
 
     public function registrarControladoresPasta(string $pasta): void {
-        // Obter as classes declaradas antes de incluir os arquivos
         $classesAntes = get_declared_classes();
 
-        // Incluir todos os arquivos PHP da pasta
         foreach (glob($pasta . '/*.php') as $arquivo) {
             require_once $arquivo;
         }
 
-        // Obter as classes declaradas após incluir os arquivos
         $classesDepois = get_declared_classes();
 
-        // Determinar as novas classes adicionadas
         $novasClasses = array_diff($classesDepois, $classesAntes);
 
-        // Filtrar e registrar as classes que estendem a classe base
         foreach ($novasClasses as $classe) {
             if (is_subclass_of($classe, \modules\core\tipos\ControllerBase::class))
             {
@@ -66,11 +64,64 @@ class Roteador
     {
         if (isset($this->rotas[$metodoHttp][$caminho])) {
             [$classe, $metodo] = $this->rotas[$metodoHttp][$caminho];
-            new $classe()->$metodo();
+            $instancia = new $classe();
+
+            $refMetodo = new \ReflectionMethod($classe, $metodo);
+            $atributoClasse = $metodoHttp === 'GET' ? HttpGet::class : HttpPost::class;
+            $atributos = $refMetodo->getAttributes($atributoClasse);
+
+            $precisaAuth = true;
+
+            if (count($atributos) > 0) {
+                $atributo = $atributos[0]->newInstance();
+                $precisaAuth = $atributo->auth;
+            }
+
+            if ($precisaAuth && !Token::validarToken()) {
+                http_response_code(401);
+                echo json_encode(["erro" => "Não autorizado"]);
+                return;
+            }
+
+            if ($metodoHttp === 'POST') {
+                $parametros = $refMetodo->getParameters();
+                $args = [];
+
+                if (count($parametros) > 0) {
+                    $input = file_get_contents('php://input');
+                    $dados = json_decode($input, true);
+                    $parametro = $parametros[0];
+                    $tipo = $parametro->getType();
+
+                    if ($tipo && !$tipo->isBuiltin()) {
+                        $classeParametro = $tipo->getName();
+                        $obj = new $classeParametro();
+
+                        foreach ($dados as $chave => $valor) {
+                            if (property_exists($obj, $chave)) {
+                                $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
+                                if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
+                                    $obj->$chave = new DateTime($valor);
+                                } else {
+                                    $obj->$chave = $valor;
+                                }
+                            }
+                        }
+
+                        $args[] = $obj;
+                    } else {
+                        $args[] = $dados[$parametro->getName()] ?? null;
+                    }
+                }
+
+                $refMetodo->invokeArgs($instancia, $args);
+            } else {
+                $refMetodo->invoke($instancia);
+            }
         } else {
-            // Lógica para rota não encontrada
             http_response_code(404);
             echo "<h1>404</h1><p>Caminho não encontrado.</p>";
         }
     }
+
 }

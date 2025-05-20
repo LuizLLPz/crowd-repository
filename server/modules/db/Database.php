@@ -17,8 +17,6 @@ class Database
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {
-            $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-            $dotenv->load();
 
             $host = $_ENV['DB_HOST'];
             $port = $_ENV['DB_PORT'];

@@ -3,6 +3,8 @@
 use modules\core\roteamento\Roteador;
 
 require_once __DIR__ . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__); // ou path onde está seu .env
+$dotenv->load();
 
 header('Content-type: application/json');
 $roteador = new Roteador();
