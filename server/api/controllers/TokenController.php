@@ -25,7 +25,19 @@ class TokenController extends ControllerBase
             ];
             $jwt = JWT::encode($payload, $_ENV['JWT_KEY'], 'HS256');
 
-            echo json_encode(["token" => $jwt]);
+            setcookie(
+                "token",
+                $jwt,
+                [
+                    "expires" => time() + (60 * 60 * 24),
+                    "path" => "/",
+                    "domain" => $_ENV['COOKIE_DOMAIN'] ?? "",
+                    "secure" => true,
+                    "httponly" => true,
+                    "samesite" => "Strict",
+                ]
+            );
+            echo json_encode(["message" => "Logado com sucesso!"], JSON_UNESCAPED_UNICODE);
             exit;
         }
         http_response_code(401);

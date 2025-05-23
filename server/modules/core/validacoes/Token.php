@@ -8,14 +8,11 @@ use Firebase\JWT\Key;
 class Token
 {
     public static function validarToken(): bool {
-        $headers = getallheaders();
-        $token = $headers['Authorization'] ?? '';
-
-        if (!$token || !str_starts_with($token, 'Bearer ')) {
+        if (!isset($_COOKIE['token'])) {
             return false;
         }
 
-        $token = substr($token, 7);
+        $token = $_COOKIE['token'];
 
         try {
             JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
@@ -24,6 +21,4 @@ class Token
             return false;
         }
     }
-
-
 }
