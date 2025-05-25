@@ -6,7 +6,17 @@ require_once __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__); // ou path onde está seu .env
 $dotenv->load();
 
-header('Content-type: application/json');
+header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: {$_ENV["CORS_ORIGIN"]}");
+header("Access-Control-Allow-Credentials: true");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    http_response_code(200);
+    exit();
+}
+
 $roteador = new Roteador();
 $roteador->registrarControladoresPasta("api/controllers");
 
