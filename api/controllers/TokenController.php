@@ -6,6 +6,7 @@ use models\Usuario;
 use modules\core\atributos\HttpPost;
 use modules\core\tipos\ControllerBase;
 use Firebase\JWT\JWT;
+use services\EmailService;
 
 class TokenController extends ControllerBase
 {
@@ -14,12 +15,12 @@ class TokenController extends ControllerBase
         $resultado = Usuario::buscarUsuarioPorNome($usuario->nomeUsuario);
         if (!$resultado) {
             http_response_code(401);
-            echo json_encode(["erro" => "Credenciais inválidas!"], JSON_UNESCAPED_UNICODE);
+            echo json_encode(["error" => "Credenciais inválidas!"], JSON_UNESCAPED_UNICODE);
             exit;
         }
         if (password_verify($usuario->senha, $resultado->senha)) {
             $payload = [
-                "id" => $resultado->idUsuario,
+                "idUsuario" => $resultado->idUsuario,
                 "nomeUsuario" => $resultado->nomeUsuario,
                 "exp" => time() + (60 * 60 * 24)
             ];
@@ -37,10 +38,16 @@ class TokenController extends ControllerBase
                     "samesite" => "Strict",
                 ]
             );
-            echo json_encode(["message" => "Logado com sucesso!"], JSON_UNESCAPED_UNICODE);
+            if (!$resultado->verificado) {
+                Usuario::gerarNovoCodigo($resultado);
+                $emailService = new EmailService();
+                $emailService->enviar($resultado->email, $resultado->nomeUsuario, "Verificar conta crowd repository",
+                    "O seu código de verificação é <b>{$resultado->codigoVerificacao}</b>");
+            }
+            echo json_encode(array_merge(["message" => "Logado com sucesso!"], $payload), JSON_UNESCAPED_UNICODE);
             exit;
         }
         http_response_code(401);
-        echo json_encode(["erro" => "Credenciais inválidas"], JSON_UNESCAPED_UNICODE);
+        echo json_encode(["error" => "Credenciais inválidas"], JSON_UNESCAPED_UNICODE);
     }
 }

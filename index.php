@@ -1,6 +1,7 @@
 <?php
 
 use modules\core\roteamento\Roteador;
+use modules\core\validacoes\ErrorHandler;
 
 require_once __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__); // ou path onde está seu .env
@@ -16,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
+ErrorHandler::registrar();
 
 $roteador = new Roteador();
 $roteador->registrarControladoresPasta("api/controllers");
