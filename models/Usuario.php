@@ -10,11 +10,8 @@ class Usuario extends Entidade
 {
     public int $idUsuario;
     public string $nomeTabela = "Usuario";
-    public string $nome;
-    public string $sobrenome;
     public string $nomeUsuario;
     public string $senha;
-    public string $nascimento;
     public string $email;
     public int $codigoVerificacao;
     public string $expiracaoCodigo;
@@ -37,22 +34,17 @@ class Usuario extends Entidade
 
         $senha = password_hash($usuario->senha, PASSWORD_DEFAULT);
 
-        $nascimento = new DateTime($usuario->nascimento)->format('Y-m-d');
-
         $usuario->codigoVerificacao = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
         $expiracaoCodigo = new DateTime('+15 minutes')->format('Y-m-d H:i:s');
 
-        $sql = "INSERT INTO Usuario (nome, sobrenome, nomeUsuario, email, senha, nascimento, codigoVerificacao, expiracaoCodigo) 
-            VALUES (:nome, :sobrenome, :nomeUsuario, :email, :senha, :nascimento, :codigoVerificacao, :expiracaoCodigo)";
+        $sql = "INSERT INTO Usuario (nomeUsuario, email, senha, codigoVerificacao, expiracaoCodigo) 
+            VALUES (:nomeUsuario, :email, :senha, :codigoVerificacao, :expiracaoCodigo)";
         $stmt = $pdo->prepare($sql);
 
         $stmt->execute([
-            ':nome' => $usuario->nome,
-            ':sobrenome' => $usuario->sobrenome,
             ':nomeUsuario' => $usuario->nomeUsuario,
             ':email' => $usuario->email,
             ':senha' => $senha,
-            ':nascimento' => $nascimento,
             ':codigoVerificacao' => $usuario->codigoVerificacao,
             ':expiracaoCodigo' => $expiracaoCodigo,
         ]);
