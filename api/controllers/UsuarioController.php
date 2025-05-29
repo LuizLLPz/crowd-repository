@@ -22,7 +22,7 @@ class UsuarioController extends ControllerBase {
     {
         $resp = Usuario::salvarUsuario($usuario);
         $emailService = new EmailService();
-        $res = $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
+        $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
             "O seu código de verificação é <b>{$usuario->codigoVerificacao}</b>");
         echo json_encode(['message'=> $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }

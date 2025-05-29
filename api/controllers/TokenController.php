@@ -22,6 +22,7 @@ class TokenController extends ControllerBase
             $payload = [
                 "idUsuario" => $resultado->idUsuario,
                 "nomeUsuario" => $resultado->nomeUsuario,
+                "verificado" => $resultado->verificado,
                 "exp" => time() + (60 * 60 * 24)
             ];
             $jwt = JWT::encode($payload, $_ENV['JWT_KEY'], 'HS256');
