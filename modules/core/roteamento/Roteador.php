@@ -120,7 +120,7 @@ class Roteador
             }
         } else {
             http_response_code(404);
-            echo json_encode(["erro" => "Rota não encontrada"]);
+            echo json_encode(["error" => "Rota não encontrada"]);
         }
     }
 
