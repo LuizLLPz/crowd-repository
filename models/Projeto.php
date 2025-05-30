@@ -21,6 +21,7 @@ class Projeto extends Entidade
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+
     public static function salvarProjeto(Projeto $projeto): string {
 
         $pdo = Database::getConnection();

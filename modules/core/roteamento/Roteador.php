@@ -120,7 +120,7 @@ class Roteador
             }
         } else {
             http_response_code(404);
-            echo "<h1>404</h1><p>Caminho não encontrado.</p>";
+            echo json_encode(["erro" => "Rota não encontrada"]);
         }
     }
 
