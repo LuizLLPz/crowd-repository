@@ -55,7 +55,7 @@ class Usuario extends Entidade
     public static function buscarUsuarioPorNome(string $nome): Usuario | false
     {
         $pdo = Database::getConnection();
-        $sql = new Usuario()->select." WHERE nomeUsuario = :nomeUsuario";
+        $sql = new Usuario()->select." WHERE email = :nomeUsuario";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':nomeUsuario' => $nome]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
