@@ -81,7 +81,7 @@ class Roteador
 
             if ($precisaAuth && !$resultado) {
                 http_response_code(401);
-                echo json_encode(["erro" => "Não autorizado"]);
+                echo json_encode(["error" => "Não autorizado"]);
                 return;
             }
 
