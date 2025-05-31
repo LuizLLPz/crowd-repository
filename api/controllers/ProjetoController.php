@@ -9,10 +9,10 @@ use modules\core\tipos\ControllerBase;
 
 class ProjetoController extends ControllerBase
 {
-    #[HttpGet('/projetos', auth: true)]
+    #[HttpGet('/projetos')]
     public function listar(): void
     {
-        $resp = Projeto::buscarProjetos();
+        $resp = Projeto::buscarProjetos(ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
     #[HttpPost('/projeto', auth: false)]
