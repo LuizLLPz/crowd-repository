@@ -24,10 +24,10 @@ class Token
 
         try {
             $decodedPayload = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
-             return new UsuarioAutenticado($decodedPayload["idUsuario"],
-                 $decodedPayload["nomeUsuario"],
-                 $decodedPayload["verificado"],
-                 $decodedPayload["exp"],
+             return new UsuarioAutenticado($decodedPayload->idUsuario,
+                 $decodedPayload->nomeUsuario,
+                 $decodedPayload->verificado,
+                 $decodedPayload->exp,
              );
         }
         catch (Exception $e) {
