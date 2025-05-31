@@ -30,7 +30,7 @@ class TokenController extends ControllerBase
             setcookie(
                 "token",
                 $jwt,
--                [
+                [
                     "expires" => time() + (60 * 60 * 24),
                     "path" => "/",
                     "domain" => $_ENV['COOKIE_DOMAIN'] ?? "",
