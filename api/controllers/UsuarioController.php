@@ -10,7 +10,7 @@ use services\EmailService;
 use modules\core\utils\Utils;
 
 class UsuarioController extends ControllerBase {
-    #[HttpGet('/usuarios', auth: true)]
+    #[HttpGet('/usuarios')]
     public function listar(): void
     {
        $resp = Usuario::buscarUsuarios();
@@ -27,7 +27,7 @@ class UsuarioController extends ControllerBase {
         echo json_encode(['message'=> $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
-    #[HttpPost('/verificarConta', auth: true)]
+    #[HttpPost('/verificarConta')]
     public function verificarConta(Usuario $usuario): void
     {
         $resultado = Usuario::buscarUsuarioPorId($usuario->idUsuario);
@@ -56,7 +56,7 @@ class UsuarioController extends ControllerBase {
         echo json_encode(["message" => "Conta verificada com sucesso!"]);
     }
 
-    #[HttpPost('/reenviarCodigo', auth: true)]
+    #[HttpPost('/reenviarCodigo')]
     public function reenviarCodigo(Usuario $usuario): void
     {
         $result = Usuario::buscarUsuarioPorId($usuario->idUsuario);
