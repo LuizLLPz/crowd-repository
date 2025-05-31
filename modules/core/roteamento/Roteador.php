@@ -77,13 +77,13 @@ class Roteador
             }
 
             $resultado = Token::validarToken();
+            if ($resultado) ControllerBase::setDadosUsuarioAutenticado($resultado);
 
             if ($precisaAuth && !$resultado) {
                 http_response_code(401);
                 echo json_encode(["erro" => "Não autorizado"]);
                 return;
             }
-            ControllerBase::setDadosUsuarioAutenticado($resultado);
 
             if ($metodoHttp === 'POST') {
                 $parametros = $refMetodo->getParameters();
