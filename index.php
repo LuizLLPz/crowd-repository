@@ -4,7 +4,7 @@ use modules\core\roteamento\Roteador;
 use modules\core\validacoes\ErrorHandler;
 
 require_once __DIR__ . '/vendor/autoload.php';
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__); // ou path onde está seu .env
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 header('Content-Type: application/json');

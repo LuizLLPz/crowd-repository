@@ -3,6 +3,7 @@ namespace modules\core\roteamento;
 
 use DateTime;
 use modules\core\atributos\HttpPost;
+use modules\core\tipos\ControllerBase;
 use modules\core\validacoes\Token;
 use ReflectionClass;
 use ReflectionException;
@@ -48,12 +49,10 @@ class Roteador
         $reflexao = new ReflectionClass($classeControlador);
         foreach ($reflexao->getMethods(ReflectionMethod::IS_PUBLIC) as $metodo) {
             foreach ($metodo->getAttributes(HttpGet::class) as $atributo) {
-                /** @var HttpGet $instanciaAtributo */
                 $instanciaAtributo = $atributo->newInstance();
                 $this->rotas['GET'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
             }
             foreach ($metodo->getAttributes(HttpPost::class) as $atributo) {
-                /** @var HttpGet $instanciaAtributo */
                 $instanciaAtributo = $atributo->newInstance();
                 $this->rotas['POST'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
             }
@@ -77,11 +76,14 @@ class Roteador
                 $precisaAuth = $atributo->auth;
             }
 
-            if ($precisaAuth && !Token::validarToken()) {
+            $resultado = Token::validarToken();
+
+            if ($precisaAuth && !$resultado) {
                 http_response_code(401);
                 echo json_encode(["erro" => "Não autorizado"]);
                 return;
             }
+            ControllerBase::setDadosUsuarioAutenticado($resultado);
 
             if ($metodoHttp === 'POST') {
                 $parametros = $refMetodo->getParameters();
