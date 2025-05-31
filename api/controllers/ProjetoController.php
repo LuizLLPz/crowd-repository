@@ -18,6 +18,7 @@ class ProjetoController extends ControllerBase
     #[HttpPost('/projeto')]
     public function salvar(Projeto $projeto): void
     {
+        $projeto->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $resp = Projeto::salvarProjeto($projeto);
         echo json_encode(['message'=> $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }

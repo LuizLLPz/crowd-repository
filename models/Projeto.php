@@ -8,12 +8,12 @@ use modules\db\Database;
 class Projeto extends Entidade
 {
     public string $nomeTabela = "Projeto";
-    public int $idProjeto;
-    public int $idUsuario;
+    public int $idProjeto = 0;
+    public int $idUsuario = 0;
     public string $titulo;
     public string $roadmap;
     public int $metaArrecadacao;
-    public int $valorArrecadado;
+    public int $valorArrecadado = 0;
     public string $telefone;
     public string $linkedin;
     public string $email;
