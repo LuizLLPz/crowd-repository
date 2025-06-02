@@ -20,6 +20,6 @@ class ProjetoController extends ControllerBase
     {
         $projeto->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $resp = Projeto::salvarProjeto($projeto);
-        echo json_encode(['message'=> $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        echo json_encode(['message' => $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

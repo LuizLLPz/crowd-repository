@@ -14,11 +14,11 @@ class Projeto extends Entidade
     public string $roadmap;
     public int $metaArrecadacao;
     public int $valorArrecadado = 0;
-    public string $telefone;
-    public string $linkedin;
-    public string $email;
-    public string $github;
-    public string $instagram;
+    public string $telefone = '';
+    public string $linkedin = '';
+    public string $email = '';
+    public string $github = '';
+    public string $instagram = '';
 
     public static function buscarProjetos(int $idUsuario): array {
 
