@@ -2,11 +2,10 @@
 
 namespace modules\core\validacoes;
 
+use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use modules\core\tipos\UsuarioAutenticado;
-use stdClass;
-use Exception;
+use modules\core\tipos\core\controllers\UsuarioAutenticado;
 
 class Token
 {

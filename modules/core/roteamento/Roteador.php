@@ -2,13 +2,13 @@
 namespace modules\core\roteamento;
 
 use DateTime;
-use modules\core\atributos\HttpPost;
-use modules\core\tipos\ControllerBase;
+use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\Http\atributos\HttpGet;
+use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\validacoes\Token;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
-use modules\core\atributos\HttpGet;
 use ReflectionProperty;
 
 class Roteador
@@ -27,7 +27,7 @@ class Roteador
         $novasClasses = array_diff($classesDepois, $classesAntes);
 
         foreach ($novasClasses as $classe) {
-            if (is_subclass_of($classe, \modules\core\tipos\ControllerBase::class))
+            if (is_subclass_of($classe, \modules\core\tipos\core\controllers\ControllerBase::class))
             {
                 try {
                     $this->registrarControlador($classe);

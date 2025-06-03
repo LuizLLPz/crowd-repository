@@ -3,9 +3,11 @@
 namespace api\controllers;
 
 use models\Projeto;
-use modules\core\atributos\HttpGet;
-use modules\core\atributos\HttpPost;
-use modules\core\tipos\ControllerBase;
+use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\Http\atributos\HttpGet;
+use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\tipos\http\tipos\Link;
+use modules\core\tipos\LinkRel;
 
 class ProjetoController extends ControllerBase
 {
@@ -19,7 +21,9 @@ class ProjetoController extends ControllerBase
     public function salvar(Projeto $projeto): void
     {
         $projeto->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $resp = Projeto::salvarProjeto($projeto);
-        echo json_encode(['message' => $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        $url = Projeto::salvarProjeto($projeto);
+        $link = new Link(LinkRel::SELF, $url, "Projeto criado");
+        $links = array($link);
+        echo json_encode(['message' => "Projeto criado com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

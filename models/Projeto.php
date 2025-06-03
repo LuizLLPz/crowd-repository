@@ -78,6 +78,8 @@ class Projeto extends Entidade
             ':github'           => $projeto->github,
             ':instagram'        => $projeto->instagram,
         ]);
-        return "Projeto cadastrado com sucesso!";
+        $projeto->idProjeto = $pdo->lastInsertId();
+
+        return "{$_ENV["CORS_ORIGIN"]}/projeto/{$projeto->idProjeto}";
     }
 }

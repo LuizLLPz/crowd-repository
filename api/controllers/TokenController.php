@@ -2,10 +2,10 @@
 
 namespace api\controllers;
 
-use models\Usuario;
-use modules\core\atributos\HttpPost;
-use modules\core\tipos\ControllerBase;
 use Firebase\JWT\JWT;
+use models\Usuario;
+use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\Http\atributos\HttpPost;
 use services\EmailService;
 
 class TokenController extends ControllerBase

@@ -3,11 +3,11 @@
 namespace api\controllers;
 
 use models\Usuario;
-use modules\core\atributos\HttpGet;
-use modules\core\atributos\HttpPost;
-use modules\core\tipos\ControllerBase;
-use services\EmailService;
+use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\Http\atributos\HttpGet;
+use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\utils\Utils;
+use services\EmailService;
 
 class UsuarioController extends ControllerBase {
     #[HttpGet('/usuarios')]

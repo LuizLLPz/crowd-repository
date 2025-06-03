@@ -1,5 +1,5 @@
 <?php
-namespace modules\core\tipos;
+namespace modules\core\tipos\core\controllers;
 
 class ControllerBase
 {

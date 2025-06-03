@@ -1,6 +1,7 @@
 <?php
-namespace modules\core\atributos;
+namespace modules\core\tipos\Http\atributos;
 use Attribute;
+
 #[Attribute(Attribute::TARGET_METHOD)]
 class HttpPost
 {
