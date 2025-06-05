@@ -12,7 +12,7 @@ class TokenController extends ControllerBase
 {
     #[HttpPost('/token', auth: false)]
     public function Autenticar(Usuario $usuario): void {
-        $resultado = Usuario::buscarUsuarioPorNome($usuario->nomeUsuario);
+        $resultado = Usuario::buscarUsuarioPorEmail($usuario->nomeUsuario);
         if (!$resultado) {
             http_response_code(401);
             echo json_encode(["error" => "Credenciais inválidas!"], JSON_UNESCAPED_UNICODE);

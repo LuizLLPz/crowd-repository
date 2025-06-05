@@ -30,6 +30,7 @@ class Usuario extends Entidade
 
     public static function salvarUsuario(Usuario $usuario): string
     {
+
         $pdo = Database::getConnection();
 
         $senha = password_hash($usuario->senha, PASSWORD_DEFAULT);
@@ -52,7 +53,7 @@ class Usuario extends Entidade
         return "Usuário cadastrado com sucesso!";
     }
 
-    public static function buscarUsuarioPorNome(string $nome): Usuario | false
+    public static function buscarUsuarioPorEmail(string $nome): Usuario | false
     {
         $pdo = Database::getConnection();
         $sql = new Usuario()->select." WHERE email = :nomeUsuario";
