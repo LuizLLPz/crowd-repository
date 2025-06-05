@@ -21,10 +21,9 @@ class Projeto extends Entidade
     public string $instagram = '';
 
     public static function buscarProjetos(int $idUsuario): array {
-
         $pdo = Database::getConnection();
-        $sql = $pdo->query(new Projeto()->select." WHERE idUsuario = :idUsuario");
-        $stmt = $pdo->prepare($sql);
+        $sqlString = (new Projeto()->select) . " WHERE idUsuario = :idUsuario";
+        $stmt = $pdo->prepare($sqlString);
         $stmt->execute([":idUsuario" => $idUsuario]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
