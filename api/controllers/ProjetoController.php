@@ -14,7 +14,7 @@ class ProjetoController extends ControllerBase
     #[HttpGet('/projetos')]
     public function listar(): void
     {
-        $resp = Projeto::buscarProjetos(ControllerBase::$usuarioAutenticado->idUsuario);
+        $resp = Projeto::buscarProjetos();
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
     #[HttpPost('/projeto')]

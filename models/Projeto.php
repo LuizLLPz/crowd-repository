@@ -20,11 +20,11 @@ class Projeto extends Entidade
     public string $github = '';
     public string $instagram = '';
 
-    public static function buscarProjetos(int $idUsuario): array {
+    public static function buscarProjetos(): array {
         $pdo = Database::getConnection();
-        $sqlString = (new Projeto()->select) . " WHERE idUsuario = :idUsuario";
+        $sqlString = (new Projeto()->select) . " ORDER BY idProjeto DESC";
         $stmt = $pdo->prepare($sqlString);
-        $stmt->execute([":idUsuario" => $idUsuario]);
+        $stmt->execute();
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
