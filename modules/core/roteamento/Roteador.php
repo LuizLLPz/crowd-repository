@@ -90,29 +90,52 @@ class Roteador
                 $args = [];
 
                 if (count($parametros) > 0) {
-                    $input = file_get_contents('php://input');
-                    $dados = json_decode($input, true);
+                    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
                     $parametro = $parametros[0];
                     $tipo = $parametro->getType();
+                    if (strpos($contentType, 'multipart/form-data') !== false) {
+                        if ($tipo && !$tipo->isBuiltin()) {
+                            $classeParametro = $tipo->getName();
+                            $obj = new $classeParametro();
 
-                    if ($tipo && !$tipo->isBuiltin()) {
-                        $classeParametro = $tipo->getName();
-                        $obj = new $classeParametro();
-
-                        foreach ($dados as $chave => $valor) {
-                            if (property_exists($obj, $chave)) {
-                                $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
-                                if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
-                                    $obj->$chave = new DateTime($valor);
-                                } else {
-                                    $obj->$chave = $valor;
+                            foreach ($_POST as $chave => $valor) {
+                                if (property_exists($obj, $chave)) {
+                                    $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
+                                    if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
+                                        $obj->$chave = new DateTime($valor);
+                                    } else {
+                                        $obj->$chave = $valor;
+                                    }
                                 }
                             }
-                        }
 
-                        $args[] = $obj;
+                            $args[] = $obj;
+                        } else {
+                            $args[] = $_POST[$parametro->getName()] ?? null;
+                        }
                     } else {
-                        $args[] = $dados[$parametro->getName()] ?? null;
+                        $input = file_get_contents('php://input');
+                        $dados = json_decode($input, true);
+
+                        if ($tipo && !$tipo->isBuiltin()) {
+                            $classeParametro = $tipo->getName();
+                            $obj = new $classeParametro();
+
+                            foreach ($dados as $chave => $valor) {
+                                if (property_exists($obj, $chave)) {
+                                    $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
+                                    if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
+                                        $obj->$chave = new DateTime($valor);
+                                    } else {
+                                        $obj->$chave = $valor;
+                                    }
+                                }
+                            }
+
+                            $args[] = $obj;
+                        } else {
+                            $args[] = $dados[$parametro->getName()] ?? null;
+                        }
                     }
                 }
 
@@ -125,5 +148,4 @@ class Roteador
             echo json_encode(["error" => "Rota não encontrada"]);
         }
     }
-
 }
