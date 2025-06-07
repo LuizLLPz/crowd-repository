@@ -107,7 +107,7 @@ class Projeto extends Entidade
 
             if (isset($_FILES['imagem'])) {
                 $imagemProjeto = $_FILES['imagem'];
-                $nomeArquivo = "projeto-{$projeto->idProjeto}.".pathinfo($i, PATHINFO_EXTENSION);;
+                $nomeArquivo = "projeto-{$projeto->idProjeto}.".pathinfo($imagemProjeto['name'], PATHINFO_EXTENSION);;
                 $resultadoUpload = File::salvarImagem($imagemProjeto, $nomeArquivo);
                 if ($resultadoUpload['success']) {
                     $projeto->caminhoImagem = $resultadoUpload['relativePath'];
