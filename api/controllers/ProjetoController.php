@@ -11,6 +11,14 @@ use modules\core\tipos\LinkRel;
 
 class ProjetoController extends ControllerBase
 {
+    #[HttpGet('/projeto')]
+    public function obter(): void
+    {
+        $idProjeto = $_GET["idProjeto"];
+        $resp = Projeto::obterProjeto($idProjeto);
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
     #[HttpGet('/projetos')]
     public function listar(): void
     {

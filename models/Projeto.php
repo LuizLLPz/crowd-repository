@@ -40,12 +40,21 @@ class Projeto extends Entidade
         return $projetos;
     }
 
-    public static function buscarProjetoID(int $idProjeto): array {
+    public static function obterProjeto(int $idProjeto): array {
         $pdo = Database::getConnection();
         $sql = new Projeto()->select." WHERE idProjeto = :idProjeto";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":idProjeto" => $idProjeto]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $baseUrl = $scheme . '://' . $host;
+        $projeto = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!empty($projeto['caminhoImagem'])) {
+            $projeto['caminhoImagem'] = $baseUrl . '/' . $projeto['caminhoImagem'];
+        }
+        return $projeto;
+
     }
 
     public static function salvarProjeto(Projeto $projeto): string
