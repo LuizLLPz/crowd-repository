@@ -25,7 +25,8 @@ class ProjetoController extends ControllerBase
         $pesquisa = $_GET['pesquisa'] ?? null;
         $categoria = $_GET['idCategoria'] ?? null;
         $projetosUsuario = $_GET['projetosUsuario'];
-        $idUsuario = $projetosUsuario ? ControllerBase::$usuarioAutenticado->idUsuario : null;
+        $projetosUsuarioBool = filter_var($projetosUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        $idUsuario = $projetosUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
         $resp = Projeto::buscarProjetos($pesquisa, $categoria, $idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
