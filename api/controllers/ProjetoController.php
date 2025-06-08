@@ -22,7 +22,9 @@ class ProjetoController extends ControllerBase
     #[HttpGet('/projetos')]
     public function listar(): void
     {
-        $resp = Projeto::buscarProjetos();
+        $pesquisa = $_GET['pesquisa'] ?? null;
+        $categoria = $_GET['idCategoria'] ?? null;
+        $resp = Projeto::buscarProjetos($pesquisa, $categoria);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 

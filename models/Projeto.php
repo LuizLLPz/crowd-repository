@@ -12,6 +12,8 @@ class Projeto extends Entidade
     public int $idProjeto = 0;
     public int $idUsuario = 0;
     public string $titulo;
+    public int $idCategoria;
+    public string $categoria = "";
     public string $roadmap;
     public string $caminhoImagem = '';
     public int $metaArrecadacao;
@@ -22,27 +24,59 @@ class Projeto extends Entidade
     public string $github = '';
     public string $instagram = '';
 
-    public static function buscarProjetos(): array {
+    public static function buscarProjetos(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
-        $sqlString = (new Projeto()->select) . " ORDER BY idProjeto DESC";
-        $stmt = $pdo->prepare($sqlString);
-        $stmt->execute();
+
+        $sql = "SELECT P.*, C.titulo AS categoria 
+            FROM Projeto P 
+            LEFT JOIN Categoria C ON C.id = P.idCategoria";
+
+        $where = [];
+        $params = [];
+
+        if ($pesquisa) {
+            $where[] = "P.titulo LIKE :pesquisa";
+            $params[':pesquisa'] = '%' . $pesquisa . '%';
+        }
+
+        if ($idCategoria) {
+            $where[] = "P.idCategoria = :idCategoria";
+            $params[':idCategoria'] = $idCategoria;
+        }
+
+        if ($idUsuario) {
+            $where[] = "P.idUsuario = :idUsuario";
+            $params[':idUsuario'] = $idUsuario;
+        }
+
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $baseUrl = $scheme . '://' . $host;
+
         $projetos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($projetos as &$projeto) {
             if (!empty($projeto['caminhoImagem'])) {
-                $projeto['caminhoImagem'] = $baseUrl . '/' . $projeto['caminhoImagem'];
+                $projeto['caminhoImagem'] = $baseUrl . '/' . ltrim($projeto['caminhoImagem'], '/');
             }
         }
+
         return $projetos;
     }
 
+
     public static function obterProjeto(int $idProjeto): array {
         $pdo = Database::getConnection();
-        $sql = new Projeto()->select." WHERE idProjeto = :idProjeto";
+        $sql = "SELECT P.*, C.titulo AS categoria FROM Projeto P 
+         LEFT JOIN Categoria C ON C.id = P.idCategoria
+         WHERE idProjeto = :idProjeto ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":idProjeto" => $idProjeto]);
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
@@ -68,6 +102,7 @@ class Projeto extends Entidade
                     idUsuario,
                     titulo, 
                     roadmap, 
+                    idCategoria, 
                     metaArrecadacao, 
                     valorArrecadado, 
                     telefone, 
@@ -80,6 +115,7 @@ class Projeto extends Entidade
                     :idUsuario,
                     :titulo, 
                     :roadmap, 
+                    :idCategoria, 
                     :metaArrecadacao, 
                     :valorArrecadado, 
                     :telefone, 
@@ -94,6 +130,7 @@ class Projeto extends Entidade
                 ':idUsuario'        => $projeto->idUsuario,
                 ':titulo'           => $projeto->titulo,
                 ':roadmap'          => $projeto->roadmap,
+                ':idCategoria'      => $projeto->idCategoria,
                 ':metaArrecadacao'  => $projeto->metaArrecadacao,
                 ':valorArrecadado'  => $projeto->valorArrecadado,
                 ':telefone'         => $projeto->telefone,
