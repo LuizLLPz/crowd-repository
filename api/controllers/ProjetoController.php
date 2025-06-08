@@ -25,6 +25,7 @@ class ProjetoController extends ControllerBase
         $resp = Projeto::buscarProjetos();
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
+
     #[HttpPost('/projeto')]
     public function salvar(Projeto $projeto): void
     {

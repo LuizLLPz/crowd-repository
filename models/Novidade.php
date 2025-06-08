@@ -16,7 +16,7 @@ class Novidade extends Entidade
     public string $imagem;
     public int $quantidadeLikes;
 
-    public static function listar(int $idProjeto) {
+    public static function listar(int $idProjeto): array {
         $pdo = Database::getConnection();
 
         $sqlString = (new Novidade()->select) . " WHERE idProjeto = :idProjeto ORDER BY dataCriacao DESC";

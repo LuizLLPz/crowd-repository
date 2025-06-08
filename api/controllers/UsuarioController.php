@@ -20,8 +20,8 @@ class UsuarioController extends ControllerBase {
     #[HttpPost('/usuario', auth: false)]
     public function salvar(Usuario $usuario): void
     {
-        $usuario = Usuario::buscarUsuarioPorEmail($usuario->email);
-        if ($usuario) {
+        $usuarioConsulta = Usuario::buscarUsuarioPorEmail($usuario->email);
+        if ($usuarioConsulta) {
             http_response_code(409);
             echo json_encode(['error' => 'Email já cadastrado'], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
             return;
