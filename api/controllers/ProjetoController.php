@@ -23,7 +23,8 @@ class ProjetoController extends ControllerBase
     public function listar(): void
     {
         $pesquisa = $_GET['pesquisa'] ?? null;
-        $categoria = $_GET['idCategoria'] ?? null;
+        $categoriaRaw = $_GET['idCategoria'] ?? null;
+        $categoria = ($categoriaRaw === '' ? null : (int) $categoriaRaw);
         $projetosUsuario = $_GET['projetosUsuario'];
         $projetosUsuarioBool = filter_var($projetosUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         $idUsuario = $projetosUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
