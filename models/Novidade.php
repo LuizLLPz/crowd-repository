@@ -11,6 +11,7 @@ class Novidade extends Entidade
     public string $nomeTabela = "Novidade";
 
     public int $id;
+    public int $idProjeto;
     public string $titulo;
     public string $descricao;
     public string $imagem;
@@ -35,7 +36,7 @@ class Novidade extends Entidade
         return $novidades;
     }
 
-    public static function criar_noticia(Novidade $novidade, int $idProjeto, int $idUsuario): string {
+    public static function criar_noticia(Novidade $novidade, int $idUsuario): string {
         $pdo = Database::getConnection();
         try {
             $pdo->beginTransaction();
@@ -44,7 +45,7 @@ class Novidade extends Entidade
             $stmt = $pdo->prepare($sql);
 
             $stmt->execute([
-                ':idProjeto' => $idProjeto,
+                ':idProjeto' => $novidade->idProjeto,
                 ':idUsuario' => $idUsuario,
                 ':titulo' => $novidade->titulo,
                 ':descricao' => $novidade->descricao,
@@ -53,7 +54,7 @@ class Novidade extends Entidade
 
             if (isset($_FILES['imagem'])) {
                 $imagemProjeto = $_FILES['imagem'];
-                $nomeArquivo = "projeto-{$idProjeto}-novidade-{$novidade->id}.".pathinfo($imagemProjeto['name'], PATHINFO_EXTENSION);;
+                $nomeArquivo = "projeto-{$novidade->idProjeto}-novidade-{$novidade->id}.".pathinfo($imagemProjeto['name'], PATHINFO_EXTENSION);;
                 $resultadoUpload = File::salvarImagem($imagemProjeto, $nomeArquivo);
                 if ($resultadoUpload['success']) {
                     $novidade->imagem = $resultadoUpload['relativePath'];
@@ -74,6 +75,6 @@ class Novidade extends Entidade
             $pdo->rollBack();
             throw $e;
         }
-        return "{$_ENV["CORS_ORIGIN"]}/projeto/{$novidade->id}";
+        return "{$_ENV["CORS_ORIGIN"]}/novidade/{$novidade->id}/";
     }
 }
