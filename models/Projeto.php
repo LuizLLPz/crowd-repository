@@ -29,7 +29,7 @@ class Projeto extends Entidade
 
         $sql = "SELECT P.*, C.titulo AS categoria 
             FROM Projeto P 
-            LEFT JOIN Categoria C ON C.id = P.idCategoria";
+            LEFT JOIN Categoria C ON C.id = P.idCategoria ";
 
         $where = [];
         $params = [];
@@ -52,6 +52,8 @@ class Projeto extends Entidade
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
         }
+
+        $sql .= " ORDER BY dataCriacao desc ";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -110,7 +112,8 @@ class Projeto extends Entidade
                     email, 
                     github, 
                     instagram,
-                    caminhoImagem
+                    caminhoImagem,
+                    dataCriacao
                 ) VALUES (
                     :idUsuario,
                     :titulo, 
@@ -123,7 +126,8 @@ class Projeto extends Entidade
                     :email, 
                     :github, 
                     :instagram,
-                    :caminhoImagem
+                    :caminhoImagem,
+                    now()
         )";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([

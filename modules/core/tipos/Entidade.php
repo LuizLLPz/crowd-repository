@@ -16,8 +16,8 @@ abstract class Entidade
         set;
     }
 
-    public DateTime $dataRegistro;
-    public DateTime $dataModificacao;
+    public ?DateTime $dataCriacao;
+    public ?DateTime $dataModificacao;
 
     public int $qtd;
 
