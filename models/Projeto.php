@@ -113,6 +113,7 @@ class Projeto extends Entidade
                     github, 
                     instagram,
                     caminhoImagem,
+                    status,
                     dataCriacao
                 ) VALUES (
                     :idUsuario,
@@ -127,6 +128,7 @@ class Projeto extends Entidade
                     :github, 
                     :instagram,
                     :caminhoImagem,
+                    3,     
                     now()
         )";
             $stmt = $pdo->prepare($sql);
@@ -166,6 +168,35 @@ class Projeto extends Entidade
             $pdo->commit();
 
             return "{$_ENV["CORS_ORIGIN"]}/projeto/{$projeto->idProjeto}";
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public static function aprovarProjeto(int $idProjeto, int $statusAntigo, int $idAprovador): string
+    {
+        $pdo = Database::getConnection();
+
+        try {
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare("UPDATE Projeto SET status = 1 WHERE idProjeto = :idProjeto");
+            $stmt->execute([
+                ':idProjeto' => $idProjeto
+            ]);
+
+            $historico = new HistoricoCampanha([
+                'idCampanha' => $idProjeto,
+                'statusAntigo' => $statusAntigo,
+                'statusNovo' => 1,
+                'idCriador' => $idAprovador,
+                'descricao' => "Projeto aprovado"
+            ]);
+            HistoricoCampanha::salvarHistorico($historico);
+
+            $pdo->commit();
+
+            return "Projeto aprovado";
         } catch (\Exception $e) {
             $pdo->rollBack();
             throw $e;
