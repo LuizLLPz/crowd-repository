@@ -12,6 +12,7 @@ class Projeto extends Entidade
     public int $idProjeto = 0;
     public int $idUsuario = 0;
     public string $titulo;
+    public int $status = 0;
     public int $idCategoria;
     public string $categoria = "";
     public string $roadmap;

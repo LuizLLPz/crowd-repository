@@ -41,4 +41,11 @@ class ProjetoController extends ControllerBase
         $links = array($link);
         echo json_encode(['message' => "Projeto criado com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
+
+    #[HttpPost('/projeto/aprovar')]
+    public function aprovarProjeto(Projeto $projeto): void
+    {
+        Projeto::aprovarProjeto($projeto->idProjeto, $projeto->status, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "Projeto aprovado"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
 }
