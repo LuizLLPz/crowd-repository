@@ -6,6 +6,7 @@ use models\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\utils\Http;
 use modules\core\utils\Utils;
 use services\EmailService;
 
@@ -22,16 +23,15 @@ class UsuarioController extends ControllerBase {
     {
         $usuarioConsulta = Usuario::buscarUsuarioPorEmail($usuario->email);
         if ($usuarioConsulta) {
-            http_response_code(409);
-            echo json_encode(['error' => 'Email já cadastrado'], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
-            return;
+            Http::HttpResponse(409, "Email já cadastrado");
         }
 
         $resp = Usuario::salvarUsuario($usuario);
         $emailService = new EmailService();
         $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
             "O seu código de verificação é <b>{$usuario->codigoVerificacao}</b>");
-        echo json_encode(['message'=> $resp], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+
+        Http::HttpResponse(200, $resp);
     }
 
     #[HttpPost('/verificarConta')]
@@ -41,16 +41,13 @@ class UsuarioController extends ControllerBase {
         $agora = new \DateTime();
 
         if ($resultado->codigoVerificacao !== $usuario->codigoVerificacao) {
-            http_response_code(403);
-            echo json_encode(["error" => "Código de verificação inválido"]);
-            return;
+            Http::HttpResponse(403, "Código de verificação inválido");
         }
+
         $expiracao = new \DateTime($resultado->expiracaoCodigo);
 
         if ($agora > $expiracao) {
-            http_response_code(400);
-            echo json_encode(["error" => "Código expirado"]);
-            return;
+            Http::HttpResponse(400, "Código expirado");
         }
 
         Usuario::verificarUsuario($usuario->idUsuario);
@@ -59,8 +56,7 @@ class UsuarioController extends ControllerBase {
         $emailService->enviar($resultado->email, $resultado->nomeUsuario, "Verificar conta crowd repository",
             "Conta verificada com sucesso! Aproveite o crowd repository!");
 
-        http_response_code(200);
-        echo json_encode(["message" => "Conta verificada com sucesso!"]);
+        Http::HttpResponse(200, "Conta verificada com sucesso!");
     }
 
     #[HttpPost('/reenviarCodigo')]
@@ -77,10 +73,7 @@ class UsuarioController extends ControllerBase {
             "O seu código de verificação é <b>{$result->codigoVerificacao}</b>"
         );
 
-        http_response_code(200);
-        echo json_encode([
-            "message" => "Um código de verificação foi enviado para " . Utils::mascararEmail($result->email)
-        ]);
+        Http::HttpResponse(201, "Um código de verificação foi enviado para " . Utils::mascararEmail($result->email));
     }
 
 }

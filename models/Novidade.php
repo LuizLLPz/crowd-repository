@@ -4,7 +4,9 @@ namespace models;
 
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
+use modules\core\utils\Utils;
 use modules\db\Database;
+use function modules\core\utils\getServerUrl;
 
 class Novidade extends Entidade
 {
@@ -23,14 +25,11 @@ class Novidade extends Entidade
         $sqlString = (new Novidade()->select) . " WHERE idProjeto = :idProjeto ORDER BY dataCriacao DESC";
         $stmt = $pdo->prepare($sqlString);
         $stmt->execute([':idProjeto' => $idProjeto]);
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $baseUrl = $scheme . '://' . $host;
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($novidades as &$novidade) {
             if (!empty($novidade['imagem'])) {
-                $novidade['imagem'] = $baseUrl . '/' . $novidade['imagem'];
+                $novidade['imagem'] = Utils::getServerUrl() . '/' . $novidade['imagem'];
             }
         }
         return $novidades;

@@ -4,7 +4,9 @@ namespace models;
 
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
+use modules\core\utils\Utils;
 use modules\db\Database;
+use function modules\core\utils\getServerUrl;
 
 class Projeto extends Entidade
 {
@@ -59,15 +61,11 @@ class Projeto extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $baseUrl = $scheme . '://' . $host;
-
         $projetos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($projetos as &$projeto) {
             if (!empty($projeto['caminhoImagem'])) {
-                $projeto['caminhoImagem'] = $baseUrl . '/' . ltrim($projeto['caminhoImagem'], '/');
+                $projeto['caminhoImagem'] = Utils::getServerUrl() . '/' . ltrim($projeto['caminhoImagem'], '/');
             }
         }
 
@@ -82,13 +80,10 @@ class Projeto extends Entidade
          WHERE idProjeto = :idProjeto ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":idProjeto" => $idProjeto]);
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $baseUrl = $scheme . '://' . $host;
         $projeto = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if (!empty($projeto['caminhoImagem'])) {
-            $projeto['caminhoImagem'] = $baseUrl . '/' . $projeto['caminhoImagem'];
+            $projeto['caminhoImagem'] = Utils::getServerUrl() . '/' . $projeto['caminhoImagem'];
         }
         return $projeto;
 

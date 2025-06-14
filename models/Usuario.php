@@ -4,6 +4,7 @@ namespace models;
 
 use DateTime;
 use modules\core\tipos\Entidade;
+use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\db\Database;
 
 class Usuario extends Entidade
@@ -16,7 +17,22 @@ class Usuario extends Entidade
     public int $codigoVerificacao;
     public string $expiracaoCodigo;
     public bool $verificado;
+    public ?FuncaoUsuario $funcao = null;
 
+    public function __construct()
+    {
+        unset($this->funcao);
+    }
+
+    public function __set(string $name, mixed $value): void
+    {
+        if ($name === 'funcao' && is_string($value)) {
+            $this->$name = FuncaoUsuario::tryFrom($value);
+            return;
+        }
+
+        $this->$name = $value;
+    }
 
     /**
      * @return Usuario[]
@@ -60,7 +76,12 @@ class Usuario extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':nomeUsuario' => $nome]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
-        return $stmt->fetch();
+        $usuario = $stmt->fetch();
+
+        if ($usuario && is_string($usuario->funcao)) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
+        }
+        return $usuario;
     }
 
     public static function buscarUsuarioPorId(int $idUsuario): Usuario | false
@@ -70,7 +91,12 @@ class Usuario extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
-        return $stmt->fetch();
+        $usuario = $stmt->fetch();
+        if ($usuario && is_string($usuario->funcao)) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
+        }
+        return $usuario;
+
     }
 
     public static function gerarNovoCodigo(Usuario $usuario): bool {

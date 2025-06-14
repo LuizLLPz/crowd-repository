@@ -27,6 +27,7 @@ class Token
                  $decodedPayload->nomeUsuario,
                  $decodedPayload->verificado,
                  $decodedPayload->exp,
+                 $decodedPayload->funcaoUsuario
              );
         }
         catch (Exception $e) {

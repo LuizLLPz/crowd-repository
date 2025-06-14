@@ -5,6 +5,8 @@ use DateTime;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\tipos\http\tipos\FuncaoUsuario;
+use modules\core\utils\Http;
 use modules\core\validacoes\Token;
 use ReflectionClass;
 use ReflectionException;
@@ -70,19 +72,23 @@ class Roteador
             $atributos = $refMetodo->getAttributes($atributoClasse);
 
             $precisaAuth = true;
+            $funcaoUsuario = FuncaoUsuario::USER;
 
             if (count($atributos) > 0) {
                 $atributo = $atributos[0]->newInstance();
                 $precisaAuth = $atributo->auth;
+                $funcaoUsuario = $atributo->funcaoUsuario;
             }
 
             $resultado = Token::validarToken();
             if ($resultado) ControllerBase::setDadosUsuarioAutenticado($resultado);
 
             if ($precisaAuth && !$resultado) {
-                http_response_code(401);
-                echo json_encode(["error" => "Não autorizado"]);
-                return;
+                Http::HttpResponse(401, "Não autorizado");
+            }
+
+            if ($funcaoUsuario === FuncaoUsuario::ADMIN && $resultado->funcao !== FuncaoUsuario::ADMIN) {
+                Http::HttpResponse(403, "Você não tem permissão para acessar essa função");
             }
 
             if ($metodoHttp === 'POST') {
@@ -144,8 +150,7 @@ class Roteador
                 $refMetodo->invoke($instancia);
             }
         } else {
-            http_response_code(404);
-            echo json_encode(["error" => "Rota não encontrada"]);
+            Http::HttpResponse(404, "Rota não encontrada");
         }
     }
 }
