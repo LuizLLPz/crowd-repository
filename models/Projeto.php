@@ -157,7 +157,7 @@ class Projeto extends Entidade
                         ':idProjeto' => $projeto->idProjeto
                     ]);
                 } else {
-                    throw new \Exception("Falha no upload da imagem");
+                    throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
                 }
             }
 
