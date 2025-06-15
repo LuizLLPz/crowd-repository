@@ -49,4 +49,19 @@ class TokenController extends ControllerBase
         }
         Http::HttpResponse(401, "Credenciais Inválidas");
     }
+
+    #[HttpPost('/logout')]
+    public function logout(): void {
+        setcookie('token', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'domain' => $_ENV['COOKIE_DOMAIN'] ?? '',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
+
+        Http::HttpResponse(200, 'Sessão finalizada.');
+    }
+
 }

@@ -181,13 +181,13 @@ class Projeto extends Entidade
                 ':idProjeto' => $idProjeto
             ]);
 
-            $historico = new HistoricoCampanha([
-                'idCampanha' => $idProjeto,
-                'statusAntigo' => $statusAntigo,
-                'statusNovo' => 1,
-                'idCriador' => $idAprovador,
-                'descricao' => "Projeto aprovado"
-            ]);
+            $historico = new HistoricoCampanha();
+            $historico->idCampanha = $idProjeto;
+            $historico->statusAntigo = $statusAntigo;
+            $historico->statusNovo = 1;
+            $historico->idCriador = $idAprovador;
+            $historico->descricao = "Projeto aprovado";
+
             HistoricoCampanha::salvarHistorico($historico);
 
             $pdo->commit();
