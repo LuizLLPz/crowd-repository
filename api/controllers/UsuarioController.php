@@ -31,7 +31,11 @@ class UsuarioController extends ControllerBase {
         $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
             "O seu código de verificação é <b>{$usuario->codigoVerificacao}</b>");
 
-        Http::HttpResponse(200, $resp);
+        Http::HttpResponse(200, $resp, [
+            'idUsuario' => $usuario->idUsuario,
+            'nomeUsuario' => $usuario->nomeUsuario,
+            'email' => $usuario->email,
+        ]);
     }
 
     #[HttpPost('/verificarConta', auth: false)]

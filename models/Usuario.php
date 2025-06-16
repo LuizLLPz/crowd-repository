@@ -66,6 +66,8 @@ class Usuario extends Entidade
             ':expiracaoCodigo' => $expiracaoCodigo,
         ]);
 
+        $usuario->idUsuario = $pdo->lastInsertId();
+
         return "Usuário cadastrado com sucesso!";
     }
 
