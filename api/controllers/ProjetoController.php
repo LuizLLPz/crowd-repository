@@ -2,7 +2,7 @@
 
 namespace api\controllers;
 
-use models\Projeto;
+use models\Campanha;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
@@ -15,7 +15,7 @@ class ProjetoController extends ControllerBase
     public function obter(): void
     {
         $idProjeto = $_GET["idProjeto"];
-        $resp = Projeto::obterProjeto($idProjeto);
+        $resp = Campanha::obterProjeto($idProjeto);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -28,24 +28,24 @@ class ProjetoController extends ControllerBase
         $projetosUsuario = $_GET['projetosUsuario'];
         $projetosUsuarioBool = filter_var($projetosUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         $idUsuario = $projetosUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
-        $resp = Projeto::buscarProjetos($pesquisa, $categoria, $idUsuario);
+        $resp = Campanha::buscarProjetos($pesquisa, $categoria, $idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
     #[HttpPost('/projeto')]
-    public function salvar(Projeto $projeto): void
+    public function salvar(Campanha $projeto): void
     {
         $projeto->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $url = Projeto::salvarProjeto($projeto);
+        $url = Campanha::salvarCampanha($projeto);
         $link = new Link(LinkRel::SELF, $url, "Projeto criado");
         $links = array($link);
         echo json_encode(['message' => "Projeto criado com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
     #[HttpPost('/projeto/aprovar')]
-    public function aprovarProjeto(Projeto $projeto): void
+    public function aprovarProjeto(Campanha $projeto): void
     {
-        Projeto::aprovarProjeto($projeto->idProjeto, $projeto->status, ControllerBase::$usuarioAutenticado->idUsuario);
+        Campanha::aprovarProjeto($projeto->idProjeto, $projeto->status, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode(['message' => "Projeto aprovado"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

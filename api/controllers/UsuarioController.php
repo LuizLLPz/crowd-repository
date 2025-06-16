@@ -34,7 +34,7 @@ class UsuarioController extends ControllerBase {
         Http::HttpResponse(200, $resp);
     }
 
-    #[HttpPost('/verificarConta')]
+    #[HttpPost('/verificarConta', auth: false)]
     public function verificarConta(Usuario $usuario): void
     {
         $resultado = Usuario::buscarUsuarioPorId($usuario->idUsuario);

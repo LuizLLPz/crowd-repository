@@ -6,9 +6,8 @@ use modules\core\tipos\Entidade;
 use modules\core\utils\File;
 use modules\core\utils\Utils;
 use modules\db\Database;
-use function modules\core\utils\getServerUrl;
 
-class Projeto extends Entidade
+class Campanha extends Entidade
 {
     public string $nomeTabela = "Projeto";
     public int $idProjeto = 0;
@@ -89,7 +88,7 @@ class Projeto extends Entidade
 
     }
 
-    public static function salvarProjeto(Projeto $projeto): string
+    public static function salvarCampanha(Campanha $projeto): string
     {
         $pdo = Database::getConnection();
 
