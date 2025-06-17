@@ -36,7 +36,7 @@ class ProjetoController extends ControllerBase
     public function salvar(Campanha $projeto): void
     {
         $projeto->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $url = Campanha::salvarCampanha($projeto);
+        $url = Campanha::criar_campanha($projeto);
         $link = new Link(LinkRel::SELF, $url, "Projeto criado");
         $links = array($link);
         echo json_encode(['message' => "Projeto criado com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);

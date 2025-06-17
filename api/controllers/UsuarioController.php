@@ -2,6 +2,7 @@
 
 namespace api\controllers;
 
+use Firebase\JWT\JWT;
 use models\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
@@ -26,10 +27,32 @@ class UsuarioController extends ControllerBase {
             Http::HttpResponse(409, "Email já cadastrado");
         }
 
-        $resp = Usuario::salvarUsuario($usuario);
+        $resp = Usuario::criar_usuario($usuario);
         $emailService = new EmailService();
         $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
             "O seu código de verificação é <b>{$usuario->codigoVerificacao}</b>");
+
+        $payload = [
+            "idUsuario" => $usuario->idUsuario,
+            "nomeUsuario" => $usuario->nomeUsuario,
+            "verificado" => false,
+            "funcaoUsuario" => "user",
+            "exp" => time() + (60 * 60 * 24),
+        ];
+        $jwt = JWT::encode($payload, $_ENV['JWT_KEY'], 'HS256');
+
+        setcookie(
+            "token",
+            $jwt,
+            [
+                "expires" => time() + (60 * 60 * 24),
+                "path" => "/",
+                "domain" => $_ENV['COOKIE_DOMAIN'] ?? "",
+                "secure" => true,
+                "httponly" => true,
+                "samesite" => "Strict",
+            ]
+        );
 
         Http::HttpResponse(200, $resp, [
             'idUsuario' => $usuario->idUsuario,
@@ -38,7 +61,7 @@ class UsuarioController extends ControllerBase {
         ]);
     }
 
-    #[HttpPost('/verificarConta', auth: false)]
+    #[HttpPost('/verificarConta')]
     public function verificarConta(Usuario $usuario): void
     {
         $resultado = Usuario::buscarUsuarioPorId($usuario->idUsuario);

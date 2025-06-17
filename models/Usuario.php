@@ -44,7 +44,7 @@ class Usuario extends Entidade
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public static function salvarUsuario(Usuario $usuario): string
+    public static function criar_usuario(Usuario $usuario): string
     {
 
         $pdo = Database::getConnection();
