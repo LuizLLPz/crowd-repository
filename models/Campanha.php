@@ -9,8 +9,8 @@ use modules\db\Database;
 
 class Campanha extends Entidade
 {
-    public string $nomeTabela = "Projeto";
-    public int $idProjeto = 0;
+    public string $nomeTabela = "Campanha";
+    public int $idCampanha = 0;
     public int $idUsuario = 0;
     public string $titulo;
     public int $status = 0;
@@ -26,28 +26,28 @@ class Campanha extends Entidade
     public string $github = '';
     public string $instagram = '';
 
-    public static function buscarProjetos(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
+    public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT P.*, C.titulo AS categoria 
-            FROM Projeto P 
-            LEFT JOIN Categoria C ON C.id = P.idCategoria ";
+        $sql = "SELECT C.*, C.titulo AS categoria 
+            FROM Campanha C 
+            LEFT JOIN Categoria CA ON CA.id = C.idCategoria ";
 
         $where = [];
         $params = [];
 
         if ($pesquisa) {
-            $where[] = "P.titulo LIKE :pesquisa";
+            $where[] = "C.titulo LIKE :pesquisa";
             $params[':pesquisa'] = '%' . $pesquisa . '%';
         }
 
         if ($idCategoria) {
-            $where[] = "P.idCategoria = :idCategoria";
+            $where[] = "C.idCategoria = :idCategoria";
             $params[':idCategoria'] = $idCategoria;
         }
 
         if ($idUsuario) {
-            $where[] = "P.idUsuario = :idUsuario";
+            $where[] = "C.idUsuario = :idUsuario";
             $params[':idUsuario'] = $idUsuario;
         }
 
@@ -60,42 +60,42 @@ class Campanha extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
 
-        $projetos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $campanhas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        foreach ($projetos as &$projeto) {
-            if (!empty($projeto['caminhoImagem'])) {
-                $projeto['caminhoImagem'] = Utils::getServerUrl() . '/' . ltrim($projeto['caminhoImagem'], '/');
+        foreach ($campanhas as &$campanha) {
+            if (!empty($campanha['caminhoImagem'])) {
+                $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . ltrim($campanha['caminhoImagem'], '/');
             }
         }
 
-        return $projetos;
+        return $campanhas;
     }
 
 
-    public static function obterProjeto(int $idProjeto): array {
+    public static function obterCampanha(int $idCampanha): array {
         $pdo = Database::getConnection();
-        $sql = "SELECT P.*, C.titulo AS categoria FROM Projeto P 
+        $sql = "SELECT P.*, C.titulo AS categoria FROM Campanha P 
          LEFT JOIN Categoria C ON C.id = P.idCategoria
-         WHERE idProjeto = :idProjeto ";
+         WHERE idCampanha = :idCampanha ";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([":idProjeto" => $idProjeto]);
-        $projeto = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $stmt->execute([":idCampanha" => $idCampanha]);
+        $campanha = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if (!empty($projeto['caminhoImagem'])) {
-            $projeto['caminhoImagem'] = Utils::getServerUrl() . '/' . $projeto['caminhoImagem'];
+        if (!empty($campanha['caminhoImagem'])) {
+            $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . $campanha['caminhoImagem'];
         }
-        return $projeto;
+        return $campanha;
 
     }
 
-    public static function salvarCampanha(Campanha $projeto): string
+    public static function criar_campanha(Campanha $campanha): string
     {
         $pdo = Database::getConnection();
 
         try {
             $pdo->beginTransaction();
 
-            $sql = "INSERT INTO Projeto (
+            $sql = "INSERT INTO Campanha (
                     idUsuario,
                     titulo, 
                     roadmap, 
@@ -128,32 +128,32 @@ class Campanha extends Entidade
         )";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                ':idUsuario'        => $projeto->idUsuario,
-                ':titulo'           => $projeto->titulo,
-                ':roadmap'          => $projeto->roadmap,
-                ':idCategoria'      => $projeto->idCategoria,
-                ':metaArrecadacao'  => $projeto->metaArrecadacao,
-                ':valorArrecadado'  => $projeto->valorArrecadado,
-                ':telefone'         => $projeto->telefone,
-                ':linkedin'         => $projeto->linkedin,
-                ':email'            => $projeto->email,
-                ':github'           => $projeto->github,
-                ':instagram'        => $projeto->instagram,
-                ':caminhoImagem'    => $projeto->caminhoImagem
+                ':titulo'           => $campanha->titulo,
+                ':roadmap'          => $campanha->roadmap,
+                ':idCategoria'      => $campanha->idCategoria,
+                ':metaArrecadacao'  => $campanha->metaArrecadacao,
+                ':valorArrecadado'  => $campanha->valorArrecadado,
+                ':telefone'         => $campanha->telefone,
+                ':linkedin'         => $campanha->linkedin,
+                ':email'            => $campanha->email,
+                ':github'           => $campanha->github,
+                ':instagram'        => $campanha->instagram,
+                ':idUsuario'        => $campanha->idUsuario,
+                ':caminhoImagem'    => $campanha->caminhoImagem
             ]);
-            $projeto->idProjeto = $pdo->lastInsertId();
+            $campanha->idCampanha = $pdo->lastInsertId();
 
             if (isset($_FILES['imagem'])) {
-                $imagemProjeto = $_FILES['imagem'];
-                $nomeArquivo = "projeto-{$projeto->idProjeto}.".pathinfo($imagemProjeto['name'], PATHINFO_EXTENSION);;
-                $resultadoUpload = File::salvarImagem($imagemProjeto, $nomeArquivo);
+                $imagemCampanha = $_FILES['imagem'];
+                $nomeArquivo = "campanha-{$campanha->idCampanha}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);;
+                $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
                 if ($resultadoUpload['success']) {
-                    $projeto->caminhoImagem = $resultadoUpload['relativePath'];
+                    $campanha->caminhoImagem = $resultadoUpload['relativePath'];
 
-                    $stmtImg = $pdo->prepare("UPDATE Projeto SET caminhoImagem = :caminhoImagem WHERE idProjeto = :idProjeto");
+                    $stmtImg = $pdo->prepare("UPDATE Campanha SET caminhoImagem = :caminhoImagem WHERE idCampanha = :idCampanha");
                     $stmtImg->execute([
-                        ':caminhoImagem' => $projeto->caminhoImagem,
-                        ':idProjeto' => $projeto->idProjeto
+                        ':caminhoImagem' => $campanha->caminhoImagem,
+                        ':idCampanha' => $campanha->idCampanha
                     ]);
                 } else {
                     throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
@@ -162,36 +162,36 @@ class Campanha extends Entidade
 
             $pdo->commit();
 
-            return "{$_ENV["CORS_ORIGIN"]}/projeto/{$projeto->idProjeto}";
+            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
         } catch (\Exception $e) {
             $pdo->rollBack();
             throw $e;
         }
     }
 
-    public static function aprovarProjeto(int $idProjeto, int $statusAntigo, int $idAprovador): string
+    public static function aprovarCampanha(int $idCampanha, int $statusAntigo, int $idAprovador): string
     {
         $pdo = Database::getConnection();
 
         try {
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare("UPDATE Projeto SET status = 1 WHERE idProjeto = :idProjeto");
+            $stmt = $pdo->prepare("UPDATE Campanha SET status = 1 WHERE idCampanha = :idCampanha");
             $stmt->execute([
-                ':idProjeto' => $idProjeto
+                ':idCampanha' => $idCampanha
             ]);
 
             $historico = new HistoricoCampanha();
-            $historico->idCampanha = $idProjeto;
+            $historico->idCampanha = $idCampanha;
             $historico->statusAntigo = $statusAntigo;
             $historico->statusNovo = 1;
             $historico->idCriador = $idAprovador;
-            $historico->descricao = "Projeto aprovado";
+            $historico->descricao = "Campanha aprovada";
 
             HistoricoCampanha::salvarHistorico($historico);
 
             $pdo->commit();
 
-            return "Projeto aprovado";
+            return "Campanha aprovada";
         } catch (\Exception $e) {
             $pdo->rollBack();
             throw $e;

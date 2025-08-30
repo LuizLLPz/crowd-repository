@@ -13,18 +13,18 @@ class Novidade extends Entidade
     public string $nomeTabela = "Novidade";
 
     public int $id;
-    public int $idProjeto;
+    public int $idCampanha;
     public string $titulo;
     public string $descricao;
     public string $imagem;
     public int $quantidadeLikes;
 
-    public static function listar(int $idProjeto): array {
+    public static function listar(int $idCampanha): array {
         $pdo = Database::getConnection();
 
-        $sqlString = (new Novidade()->select) . " WHERE idProjeto = :idProjeto ORDER BY dataCriacao DESC";
+        $sqlString = (new Novidade()->select) . " WHERE idCampanha = :idCampanha ORDER BY dataCriacao DESC";
         $stmt = $pdo->prepare($sqlString);
-        $stmt->execute([':idProjeto' => $idProjeto]);
+        $stmt->execute([':idCampanha' => $idCampanha]);
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($novidades as &$novidade) {
@@ -39,12 +39,12 @@ class Novidade extends Entidade
         $pdo = Database::getConnection();
         try {
             $pdo->beginTransaction();
-            $sql = "INSERT INTO Novidade (idProjeto, idUsuario, titulo, descricao, dataCriacao) 
-            VALUES (:idProjeto, :idUsuario, :titulo, :descricao, now())";
+            $sql = "INSERT INTO Novidade (idCampanha, idUsuario, titulo, descricao, dataCriacao) 
+            VALUES (:idCampanha, :idUsuario, :titulo, :descricao, now())";
             $stmt = $pdo->prepare($sql);
 
             $stmt->execute([
-                ':idProjeto' => $novidade->idProjeto,
+                ':idCampanha' => $novidade->idCampanha,
                 ':idUsuario' => $idUsuario,
                 ':titulo' => $novidade->titulo,
                 ':descricao' => $novidade->descricao,
@@ -52,9 +52,9 @@ class Novidade extends Entidade
             $novidade->id = $pdo->lastInsertId();
 
             if (isset($_FILES['imagem'])) {
-                $imagemProjeto = $_FILES['imagem'];
-                $nomeArquivo = "projeto-{$novidade->idProjeto}-novidade-{$novidade->id}.".pathinfo($imagemProjeto['name'], PATHINFO_EXTENSION);;
-                $resultadoUpload = File::salvarImagem($imagemProjeto, $nomeArquivo);
+                $imagemCampanha = $_FILES['imagem'];
+                $nomeArquivo = "campanha-{$novidade->idCampanha}-novidade-{$novidade->id}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);;
+                $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
                 if ($resultadoUpload['success']) {
                     $novidade->imagem = $resultadoUpload['relativePath'];
 

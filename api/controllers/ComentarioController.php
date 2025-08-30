@@ -15,8 +15,8 @@ class ComentarioController extends ControllerBase
     #[HttpGet('/comentarios')]
     public function listar(): void
     {
-        $idProjeto = $_GET['idNovidade'];
-        $resp = Novidade::listar($idProjeto);
+        $idCampanha = $_GET['idNovidade'];
+        $resp = Novidade::listar($idCampanha);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 

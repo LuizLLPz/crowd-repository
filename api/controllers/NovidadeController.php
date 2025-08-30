@@ -14,8 +14,8 @@ class NovidadeController extends ControllerBase
     #[HttpGet('/novidades')]
     public function listar(): void
     {
-        $idProjeto = $_GET['idProjeto'];
-        $resp = Novidade::listar($idProjeto);
+        $idCampanha = $_GET['idCampanha'];
+        $resp = Novidade::listar($idCampanha);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
