@@ -2,6 +2,7 @@
 
 namespace models;
 
+use models\campanha\Denuncia;
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
 use modules\core\utils\Utils;
@@ -25,11 +26,13 @@ class Campanha extends Entidade
     public string $email = '';
     public string $github = '';
     public string $instagram = '';
+    public bool $denunciadoUsuario;
+    public int $qtdDenuncias;
 
     public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT C.*, C.titulo AS categoria 
+        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idCampanha = C.idCampanha) AS qtdDenuncias 
             FROM Campanha C 
             LEFT JOIN Categoria CA ON CA.id = C.idCategoria ";
 
@@ -55,6 +58,8 @@ class Campanha extends Entidade
             $sql .= " WHERE " . implode(" AND ", $where);
         }
 
+
+
         $sql .= " ORDER BY dataCriacao desc ";
 
         $stmt = $pdo->prepare($sql);
@@ -72,7 +77,7 @@ class Campanha extends Entidade
     }
 
 
-    public static function obterCampanha(int $idCampanha): array {
+    public static function obterCampanha(int $idCampanha, int $idUsuario): array {
         $pdo = Database::getConnection();
         $sql = "SELECT P.*, C.titulo AS categoria FROM Campanha P 
          LEFT JOIN Categoria C ON C.id = P.idCategoria
@@ -84,6 +89,9 @@ class Campanha extends Entidade
         if (!empty($campanha['caminhoImagem'])) {
             $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . $campanha['caminhoImagem'];
         }
+
+        $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuarioCampanha($idUsuario, $idCampanha);
+
         return $campanha;
 
     }
