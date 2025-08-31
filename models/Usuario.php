@@ -24,6 +24,7 @@ class Usuario extends Entidade
     public ?string $github = '';
     public ?string $instagram = '';
     public ?string $descricao = '';
+    public ?int $idCargo = null;
 
     public function __construct()
     {
