@@ -32,7 +32,7 @@ class Campanha extends Entidade
     public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idCampanha = C.idCampanha) AS quantidadeDenuncias 
+        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idCampanha = C.idCampanha) AS qtdDenuncias 
             FROM Campanha C 
             LEFT JOIN Categoria CA ON CA.id = C.idCategoria ";
 
