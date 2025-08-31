@@ -27,6 +27,7 @@ class Campanha extends Entidade
     public string $github = '';
     public string $instagram = '';
     public bool $denunciadoUsuario;
+    public int $qtdDenuncias;
 
     public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
@@ -53,9 +54,13 @@ class Campanha extends Entidade
             $params[':idUsuario'] = $idUsuario;
         }
 
+        $sql .= ", (SELECT COUNT(*) FROM Denuncia D WHERE D.idCampanha = C.idCampanha) AS quantidadeDenuncias";
+
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
         }
+
+
 
         $sql .= " ORDER BY dataCriacao desc ";
 
