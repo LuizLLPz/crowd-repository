@@ -18,6 +18,12 @@ class Usuario extends Entidade
     public string $expiracaoCodigo;
     public bool $verificado;
     public ?FuncaoUsuario $funcao = null;
+    public ?string $caminhoImagem = '';
+    public ?string $telefone = '';
+    public ?string $linkedin = '';
+    public ?string $github = '';
+    public ?string $instagram = '';
+    public ?string $descricao = '';
 
     public function __construct()
     {
