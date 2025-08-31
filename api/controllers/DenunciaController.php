@@ -3,22 +3,18 @@
 
 namespace api\controllers;
 
-use models\Comentario;
-use models\Denuncia;
-use models\Novidade;
+use models\campanha\Denuncia;
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
-use modules\core\tipos\http\tipos\Link;
-use modules\core\tipos\LinkRel;
+use modules\core\utils\Http;
 
 class DenunciaController extends ControllerBase
 {
-    #[HttpPost('/denuncia')]
+    #[HttpPost('/denuncia') ]
     public function salvar(Denuncia $denuncia): void
     {
+        $denuncia->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $res = Denuncia::denunciarCampanha($denuncia);
-
-
+        Http::HttpResponse(200, $res);
     }
 }

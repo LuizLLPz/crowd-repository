@@ -1,6 +1,6 @@
 <?php
 
-namespace models;
+namespace models\campanha;
 
 use models\campanha\enums\MotivoDenuncia;
 use modules\core\tipos\Entidade;
@@ -12,8 +12,9 @@ class Denuncia extends Entidade
     public string $nomeTabela = "Denuncia";
 
     public int $idCampanha;
-    public int $idUsuario;
-    public MotivoDenuncia $motivoDenuncia;
+    public int $idUsuario = 0;
+    public string $motivoDenuncia;
+    public string $descDenuncia;
     public string $comentario;
 
     public static function denunciarCampanha(Denuncia $denuncia): string {
@@ -25,7 +26,7 @@ class Denuncia extends Entidade
         $stmt->execute([
             ':idDenuncia' => $denuncia->idCampanha,
             ':idUsuario' => $denuncia->idUsuario,
-            ':motivoDenuncia' => $denuncia->motivoDenuncia->value,
+            ':motivoDenuncia' => $denuncia->motivoDenuncia,
             ':comentario' => $denuncia->comentario
         ]);
 
