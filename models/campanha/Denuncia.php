@@ -32,4 +32,17 @@ class Denuncia extends Entidade
 
         return "Denúncia registrada com sucesso!";
     }
+
+    public static function buscarDenunciaUsuarioCampanha(int $idUsuario, int $idCampanha): bool {
+        $pdo = Database::getConnection();
+
+        $sql = "SELECT COUNT(*) FROM Denuncia WHERE idUsuario = :idUsuario AND idCampanha = :idCampanha";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idUsuario' => $idUsuario,
+            ':idCampanha' => $idCampanha
+        ]);
+        return $stmt->fetchColumn() > 0;
+
+    }
 }

@@ -15,7 +15,7 @@ class CampanhaController extends ControllerBase
     public function obter(): void
     {
         $idCampanha = $_GET["idCampanha"];
-        $resp = Campanha::obterCampanha($idCampanha);
+        $resp = Campanha::obterCampanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
