@@ -3,6 +3,7 @@
 namespace models;
 
 use models\campanha\Denuncia;
+use models\campanha\InscricaoCampanha;
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
 use modules\core\utils\Utils;
@@ -27,6 +28,7 @@ class Campanha extends Entidade
     public string $github = '';
     public string $instagram = '';
     public bool $denunciadoUsuario;
+    public bool $inscritoUsuario;
     public int $qtdDenuncias;
 
     public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
@@ -91,6 +93,8 @@ class Campanha extends Entidade
         }
 
         $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuarioCampanha($idUsuario, $idCampanha);
+        $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
+        $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
 
         return $campanha;
 
@@ -204,5 +208,14 @@ class Campanha extends Entidade
             $pdo->rollBack();
             throw $e;
         }
+    }
+
+    public static function obterTitulo(int $idCampanha): string {
+        $pdo = Database::getConnection();
+        $sql = "SELECT titulo FROM Campanha WHERE idCampanha = :idCampanha";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idCampanha' => $idCampanha]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['titulo'] : '';
     }
 }

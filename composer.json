@@ -14,7 +14,10 @@
     "ext-pdo": "*",
     "firebase/php-jwt": "^6.11",
     "phpmailer/phpmailer": "^6.10",
-    "ext-fileinfo": "*"
+    "ext-fileinfo": "*",
+    "cboden/ratchet": "^0.4.4",
+    "react/http": "^1.11",
+    "guzzlehttp/guzzle": "^7.10"
   },
   "autoload": {
     "psr-4": {

@@ -7,7 +7,7 @@ use models\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\utils\Http;
-use services\EmailService;
+use services\integrations\email\EmailService;
 
 class TokenController extends ControllerBase
 {
