@@ -9,7 +9,7 @@ use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;
-use services\EmailService;
+use services\integrations\email\EmailService;
 
 class UsuarioController extends ControllerBase {
     #[HttpGet('/usuarios')]
