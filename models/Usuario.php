@@ -14,7 +14,7 @@ class Usuario extends Entidade
     public string $nomeUsuario;
     public string $senha;
     public string $email;
-    public int $codigoVerificacao;
+    public string $codigoVerificacao;
     public string $expiracaoCodigo;
     public bool $verificado;
     public ?FuncaoUsuario $funcao = null;
@@ -24,6 +24,7 @@ class Usuario extends Entidade
     public ?string $github = '';
     public ?string $instagram = '';
     public ?string $descricao = '';
+    public ?int $idCargo = null;
 
     public function __construct()
     {
