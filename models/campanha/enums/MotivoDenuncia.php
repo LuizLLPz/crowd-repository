@@ -15,7 +15,7 @@ enum MotivoDenuncia: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::FRAUDE_ENGANOSO => 'Fraude ou Campanha Enganosa',
+            self::FRAUDE_ENGANOSO => 'Fraude ou Informações Enganosas',
             self::DIREITOS_AUTORAIS => 'Violação de Direitos Autorais / Propriedade Intelectual',
             self::CONTEUDO_INAPROPRIADO => 'Conteúdo Inapropriado ou Ofensivo',
             self::SPAM_PUBLICIDADE => 'Spam ou Publicidade',

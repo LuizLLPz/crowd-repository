@@ -3,6 +3,7 @@
 namespace models;
 
 use models\campanha\Denuncia;
+use models\campanha\enums\TipoAlvo;
 use models\campanha\InscricaoCampanha;
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
@@ -34,7 +35,7 @@ class Campanha extends Entidade
     public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idCampanha = C.idCampanha) AS qtdDenuncias 
+        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
             FROM Campanha C 
             LEFT JOIN Categoria CA ON CA.id = C.idCategoria ";
 
@@ -79,7 +80,7 @@ class Campanha extends Entidade
     }
 
 
-    public static function obterCampanha(int $idCampanha, int $idUsuario): array {
+    public static function obterCampanha(int $idCampanha, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
         $sql = "SELECT P.*, C.titulo AS categoria FROM Campanha P 
          LEFT JOIN Categoria C ON C.id = P.idCategoria
@@ -92,9 +93,12 @@ class Campanha extends Entidade
             $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . $campanha['caminhoImagem'];
         }
 
-        $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuarioCampanha($idUsuario, $idCampanha);
-        $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
-        $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
+        if ($idUsuario != null) {
+            $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuario($idUsuario, $idCampanha, TipoAlvo::CAMPANHA);
+            $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
+            $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
+        }
+
 
         return $campanha;
 
