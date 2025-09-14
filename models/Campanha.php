@@ -12,13 +12,13 @@ class Campanha extends Entidade
     public string $nomeTabela = "Campanha";
     public int $idCampanha = 0;
     public int $idUsuario = 0;
-    public string $titulo;
+    public string $titulo = '';
     public int $status = 0;
-    public int $idCategoria;
+    public int $idCategoria = 0; 
     public string $categoria = "";
-    public string $roadmap;
-    public string $caminhoImagem = '';
-    public int $metaArrecadacao;
+    public string $roadmap = '';
+    public string $caminhoImagem = ''; 
+    public int $metaArrecadacao = 0;
     public int $valorArrecadado = 0;
     public string $telefone = '';
     public string $linkedin = '';
@@ -94,7 +94,6 @@ class Campanha extends Entidade
 
         try {
             $pdo->beginTransaction();
-
             $sql = "INSERT INTO Campanha (
                     idUsuario,
                     titulo, 
@@ -192,6 +191,35 @@ class Campanha extends Entidade
             $pdo->commit();
 
             return "Campanha aprovada";
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public static function editarCampanha(Campanha $campanha): string
+    {
+        $pdo = Database::getConnection();
+        try {
+            $pdo->beginTransaction();
+            $sql = "UPDATE Campanha SET 
+                        titulo = :titulo,
+                        roadmap = :roadmap,
+                        idCategoria = :idCategoria,
+                        metaArrecadacao = :metaArrecadacao,
+                        caminhoImagem = :caminhoImagem
+                    WHERE idCampanha = :idCampanha";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':titulo' => $campanha->titulo,
+                ':roadmap' => $campanha->roadmap,
+                ':idCategoria' => $campanha->idCategoria,
+                ':metaArrecadacao' => $campanha->metaArrecadacao,
+                ':caminhoImagem' => $campanha->caminhoImagem,
+                ':idCampanha' => $campanha->idCampanha
+            ]);
+            $pdo->commit();
+            return "Campanha atualizada com sucesso!";
         } catch (\Exception $e) {
             $pdo->rollBack();
             throw $e;
