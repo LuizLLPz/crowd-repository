@@ -162,52 +162,15 @@ class Campanha extends Entidade
             ]);
             $campanha->idCampanha = $pdo->lastInsertId();
 
-            if (isset($_FILES['imagem'])) {
-                $imagemCampanha = $_FILES['imagem'];
-                $nomeArquivo = "campanha-{$campanha->idCampanha}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);;
-                $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
-                if ($resultadoUpload['success']) {
-                    $campanha->caminhoImagem = $resultadoUpload['relativePath'];
-
-                    $stmtImg = $pdo->prepare("UPDATE Campanha SET caminhoImagem = :caminhoImagem WHERE idCampanha = :idCampanha");
-                    $stmtImg->execute([
-                        ':caminhoImagem' => $campanha->caminhoImagem,
-                        ':idCampanha' => $campanha->idCampanha
-                    ]);
-                } else {
-                    throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
-                }
-            }
-
         } catch (\Exception $e) {
             throw $e;
         }
     }
 
-    public static function alterar_status(int $idCampanha, int $status): void
-    {
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("UPDATE Campanha SET status = :status WHERE idCampanha = :idCampanha");
-        $stmt->execute([
-            ':status' => $status,
-            ':idCampanha' => $idCampanha
-        ]);
-    }
-
-    public static function obterTitulo(int $idCampanha): string {
-        $pdo = Database::getConnection();
-        $sql = "SELECT titulo FROM Campanha WHERE idCampanha = :idCampanha";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':idCampanha' => $idCampanha]);
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $result ? $result['titulo'] : '';
-    }
-
-    public static function editarCampanha(Campanha $campanha): string
+    public static function editar_campanha(Campanha $campanha): string
     {
         $pdo = Database::getConnection();
         try {
-            $pdo->beginTransaction();
             $sql = "UPDATE Campanha SET 
                         titulo = :titulo,
                         roadmap = :roadmap,
@@ -224,11 +187,39 @@ class Campanha extends Entidade
                 ':caminhoImagem' => $campanha->caminhoImagem,
                 ':idCampanha' => $campanha->idCampanha
             ]);
-            $pdo->commit();
             return "Campanha atualizada com sucesso!";
         } catch (\Exception $e) {
-            $pdo->rollBack();
             throw $e;
         }
     }
+
+    public static function alterar_status(int $idCampanha, int $status): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Campanha SET status = :status WHERE idCampanha = :idCampanha");
+        $stmt->execute([
+            ':status' => $status,
+            ':idCampanha' => $idCampanha
+        ]);
+    }
+
+    public static function alterar_caminhoImagem(int $idCampanha, string $caminhoImagem): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Campanha SET caminhoImagem = :caminhoImagem WHERE idCampanha = :idCampanha");
+        $stmt->execute([
+            ':caminhoImagem' => $caminhoImagem,
+            ':idCampanha' => $idCampanha
+        ]);
+    }
+
+    public static function obterTitulo(int $idCampanha): string {
+        $pdo = Database::getConnection();
+        $sql = "SELECT titulo FROM Campanha WHERE idCampanha = :idCampanha";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idCampanha' => $idCampanha]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['titulo'] : '';
+    }
+
 }

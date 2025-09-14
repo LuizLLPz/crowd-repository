@@ -14,14 +14,6 @@ use services\campanha\CampanhaService;
 
 class CampanhaController extends ControllerBase
 {
-    #[HttpPut('/campanha')]
-    public function editarPut(Campanha $campanha): void
-    {
-        $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $msg = Campanha::editarCampanha($campanha);
-        echo json_encode(['data' => ['message' => $msg]], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
-    }
-
     #[HttpGet('/campanha')]
     public function obter(): void
     {
@@ -54,18 +46,18 @@ class CampanhaController extends ControllerBase
         echo json_encode(['message' => "campanha criado com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
+    #[HttpPut('/campanha')]
+    public function editarPut(Campanha $campanha): void
+    {
+        $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $msg = CampanhaService::editar_campanha($campanha);
+        echo json_encode(['data' => ['message' => $msg]], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
     #[HttpPost('/campanha/aprovar')]
     public function aprovarCampanha(Campanha $campanha): void
     {
         CampanhaService::aprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode(['message' => "campanha aprovado"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
-    }
-
-    #[HttpPost('/campanha/editar')]
-    public function editar(Campanha $campanha): void
-    {
-        $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $msg = Campanha::editarCampanha($campanha);
-        echo json_encode(['data' => ['message' => $msg]], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

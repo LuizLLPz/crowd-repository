@@ -8,6 +8,7 @@ use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\tipos\Http\atributos\HttpPut;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Http;
+use modules\core\utils\Utils;
 use modules\core\validacoes\Token;
 use ReflectionClass;
 use ReflectionException;
@@ -61,7 +62,7 @@ class Roteador
             }
             foreach ($metodo->getAttributes(HttpPut::class) as $atributo) {
                 $instanciaAtributo = $atributo->newInstance();
-                $this->rotas['PUT'][$instanciaAtributo->rota] = [$classeControlador, $metodo->getName()];
+                $this->rotas['PUT'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
             }
         }
     }
@@ -116,7 +117,6 @@ class Roteador
                         if ($tipo && !$tipo->isBuiltin()) {
                             $classeParametro = $tipo->getName();
                             $obj = new $classeParametro();
-
                             foreach ($_POST as $chave => $valor) {
                                 if (property_exists($obj, $chave)) {
                                     $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
@@ -124,6 +124,25 @@ class Roteador
                                         $obj->$chave = new DateTime($valor);
                                     } else {
                                         $obj->$chave = $valor;
+                                    }
+                                }
+                            }
+                            if ($metodoHttp === "PUT") {
+                                $input = file_get_contents('php://input');
+                                $dados = json_decode($input, true);
+
+                                if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') != -1){
+                                    $dados = Utils::parse_multipart_form_data($input);
+                                }
+
+                                foreach ($dados as $chave => $valor) {
+                                    if (property_exists($obj, $chave)) {
+                                        $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
+                                        if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
+                                            $obj->$chave = new DateTime($valor);
+                                        } else {
+                                            $obj->$chave = $valor;
+                                        }
                                     }
                                 }
                             }

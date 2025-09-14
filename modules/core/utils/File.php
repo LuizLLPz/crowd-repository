@@ -29,41 +29,50 @@ class File
             return ['success' => false, 'message' => "O arquivo excede o tamanho máximo permitido de " . ($maxFileSize / 1024 / 1024) . "MB."];
         }
 
-        $destinationDirectory = __DIR__ . '/../../../uploads/images';
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $uploadsBaseDir = __DIR__ . '/../../../uploads';
+        $destinationDirectory = $uploadsBaseDir . '/images';
         $fileTmpName = $fileData['tmp_name'];
-        $fileType = $fileData['type'];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        if (!in_array($fileExtension, $allowedExtensions)) {
-            return ['success' => false, 'message' => "Extensão de arquivo inválida. Permitidas: " . implode(', ', $allowedExtensions)];
+        if (!file_exists($fileTmpName)) {
+            return ['success' => false, 'message' => 'Arquivo temporário não encontrado.'];
         }
 
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $detectedMimeType = finfo_file($finfo, $fileTmpName);
-            finfo_close($finfo);
-            if (!in_array($detectedMimeType, $allowedMimeTypes)) {
-                return ['success' => false, 'message' => "Tipo de arquivo (MIME) inválido detectado no servidor. Permitidos: " . implode(', ', $allowedMimeTypes)];
-            }
-        } elseif (!in_array($fileType, $allowedMimeTypes)) {
-            return ['success' => false, 'message' => "Tipo de arquivo (MIME) inválido enviado pelo navegador. Permitidos: " . implode(', ', $allowedMimeTypes)];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $detectedMimeType = finfo_file($finfo, $fileTmpName);
+        finfo_close($finfo);
+
+        $allowedMimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp'
+        ];
+
+        $fileExtension = array_search($detectedMimeType, $allowedMimeTypes, true);
+        if ($fileExtension === false) {
+            return ['success' => false, 'message' => "Tipo de arquivo (MIME) inválido. Permitidos: " . implode(', ', array_keys($allowedMimeTypes))];
         }
 
         if (!is_dir($destinationDirectory)) {
             if (!mkdir($destinationDirectory, 0775, true)) {
-                return ['success' => false, 'message' => "Falha ao criar o diretório de destino: {$destinationDirectory}. Verifique as permissões."];
+                return ['success' => false, 'message' => "Falha ao criar o diretório de destino."];
             }
-        } elseif (!is_writable($destinationDirectory)) {
-            return ['success' => false, 'message' => "O diretório de destino não tem permissão de escrita: {$destinationDirectory}."];
         }
 
-        $fileNameWithoutExtension = $fileName ? pathinfo($fileName, PATHINFO_FILENAME) : null;
-        $newFileName = ($fileNameWithoutExtension ?? uniqid('', true)) . '.' . $fileExtension;
+        $baseName = $fileName ? pathinfo($fileName, PATHINFO_FILENAME) : uniqid('', true);
+        $sanitizedBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $baseName);
+        $newFileName = $sanitizedBaseName . '.' . $fileExtension;
         $filePath = rtrim($destinationDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $newFileName;
 
-        if (move_uploaded_file($fileTmpName, $filePath)) {
+        $moveSuccess = false;
+        if (is_uploaded_file($fileTmpName)) {
+            $moveSuccess = move_uploaded_file($fileTmpName, $filePath);
+        } else {
+            $moveSuccess = rename($fileTmpName, $filePath);
+        }
+
+        if ($moveSuccess) {
             $relativePath = 'uploads/images/' . $newFileName;
             return [
                 'success' => true,
@@ -72,10 +81,12 @@ class File
                 'message' => 'Arquivo salvo com sucesso.'
             ];
         } else {
+            if (file_exists($fileTmpName)) {
+                unlink($fileTmpName);
+            }
             return ['success' => false, 'message' => 'Falha ao mover o arquivo para o diretório de destino.'];
         }
     }
-
 
     public static function delete(string $filePath): bool
     {
