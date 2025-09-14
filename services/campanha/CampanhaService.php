@@ -68,7 +68,7 @@ class CampanhaService
                     throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
                 }
             } else if (!empty($campanhaAntiga['caminhoImagem']) && empty($campanha->caminhoImagem)) {
-                File::deletarArquivo($campanhaAntiga['caminhoImagem']);
+                File::delete($campanhaAntiga['caminhoImagem']);
                 $campanha->caminhoImagem = '';
                 Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
             }
