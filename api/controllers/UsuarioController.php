@@ -9,13 +9,23 @@ use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;
-use services\EmailService;
+use services\integrations\email\EmailService;
+use services\usuario\UsuarioService;
 
 class UsuarioController extends ControllerBase {
+
+    #[HttpGet('/usuario')]
+    public function buscarUsuario(): void
+    {
+        $idUsuario = $_GET['idUsuario'] ?? null;
+        $resp = Usuario::buscar_usuario($idUsuario);
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
     #[HttpGet('/usuarios')]
     public function listar(): void
     {
-       $resp = Usuario::buscarUsuarios();
+       $resp = Usuario::buscar_usuarios();
        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -27,32 +37,7 @@ class UsuarioController extends ControllerBase {
             Http::HttpResponse(409, "Email já cadastrado");
         }
 
-        $resp = Usuario::criar_usuario($usuario);
-        $emailService = new EmailService();
-        $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
-            "O seu código de verificação é <b>{$usuario->codigoVerificacao}</b>");
-
-        $payload = [
-            "idUsuario" => $usuario->idUsuario,
-            "nomeUsuario" => $usuario->nomeUsuario,
-            "verificado" => false,
-            "funcaoUsuario" => "user",
-            "exp" => time() + (60 * 60 * 24),
-        ];
-        $jwt = JWT::encode($payload, $_ENV['JWT_KEY'], 'HS256');
-
-        setcookie(
-            "token",
-            $jwt,
-            [
-                "expires" => time() + (60 * 60 * 24),
-                "path" => "/",
-                "domain" => $_ENV['COOKIE_DOMAIN'] ?? "",
-                "secure" => true,
-                "httponly" => true,
-                "samesite" => "Strict",
-            ]
-        );
+        $resp = UsuarioService::salvar_usuario($usuario);
 
         Http::HttpResponse(200, $resp, [
             'idUsuario' => $usuario->idUsuario,

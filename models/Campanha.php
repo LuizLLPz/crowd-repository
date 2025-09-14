@@ -2,6 +2,9 @@
 
 namespace models;
 
+use models\campanha\Denuncia;
+use models\campanha\enums\TipoAlvo;
+use models\campanha\InscricaoCampanha;
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
 use modules\core\utils\Utils;
@@ -14,10 +17,10 @@ class Campanha extends Entidade
     public int $idUsuario = 0;
     public string $titulo = '';
     public int $status = 0;
-    public int $idCategoria = 0; 
+    public int $idCategoria = 0;
     public string $categoria = "";
     public string $roadmap = '';
-    public string $caminhoImagem = ''; 
+    public string $caminhoImagem = '';
     public int $metaArrecadacao = 0;
     public int $valorArrecadado = 0;
     public string $telefone = '';
@@ -25,11 +28,14 @@ class Campanha extends Entidade
     public string $email = '';
     public string $github = '';
     public string $instagram = '';
+    public bool $denunciadoUsuario;
+    public bool $inscritoUsuario;
+    public int $qtdDenuncias;
 
-    public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
+    public static function buscarCampanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT C.*, C.titulo AS categoria 
+        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
             FROM Campanha C 
             LEFT JOIN Categoria CA ON CA.id = C.idCategoria ";
 
@@ -51,9 +57,15 @@ class Campanha extends Entidade
             $params[':idUsuario'] = $idUsuario;
         }
 
+        if ($idUsuario == null && !$administrador) {
+           $where[] = "C.status = 1";
+        }
+
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
         }
+
+
 
         $sql .= " ORDER BY dataCriacao desc ";
 
@@ -72,7 +84,7 @@ class Campanha extends Entidade
     }
 
 
-    public static function obterCampanha(int $idCampanha): array {
+    public static function obterCampanha(int $idCampanha, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
         $sql = "SELECT P.*, C.titulo AS categoria FROM Campanha P 
          LEFT JOIN Categoria C ON C.id = P.idCategoria
@@ -84,16 +96,24 @@ class Campanha extends Entidade
         if (!empty($campanha['caminhoImagem'])) {
             $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . $campanha['caminhoImagem'];
         }
+
+        if ($idUsuario != null) {
+            $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuario($idUsuario, $idCampanha, TipoAlvo::CAMPANHA);
+            $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
+            $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
+        }
+
+
         return $campanha;
 
     }
 
-    public static function criar_campanha(Campanha $campanha): string
+    public static function criar_campanha(Campanha $campanha)
     {
         $pdo = Database::getConnection();
 
         try {
-            $pdo->beginTransaction();
+
             $sql = "INSERT INTO Campanha (
                     idUsuario,
                     titulo, 
@@ -159,42 +179,28 @@ class Campanha extends Entidade
                 }
             }
 
-            $pdo->commit();
-
-            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
         } catch (\Exception $e) {
-            $pdo->rollBack();
             throw $e;
         }
     }
 
-    public static function aprovarCampanha(int $idCampanha, int $statusAntigo, int $idAprovador): string
+    public static function alterar_status(int $idCampanha, int $status): void
     {
         $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Campanha SET status = :status WHERE idCampanha = :idCampanha");
+        $stmt->execute([
+            ':status' => $status,
+            ':idCampanha' => $idCampanha
+        ]);
+    }
 
-        try {
-            $pdo->beginTransaction();
-            $stmt = $pdo->prepare("UPDATE Campanha SET status = 1 WHERE idCampanha = :idCampanha");
-            $stmt->execute([
-                ':idCampanha' => $idCampanha
-            ]);
-
-            $historico = new HistoricoCampanha();
-            $historico->idCampanha = $idCampanha;
-            $historico->statusAntigo = $statusAntigo;
-            $historico->statusNovo = 1;
-            $historico->idCriador = $idAprovador;
-            $historico->descricao = "Campanha aprovada";
-
-            HistoricoCampanha::salvarHistorico($historico);
-
-            $pdo->commit();
-
-            return "Campanha aprovada";
-        } catch (\Exception $e) {
-            $pdo->rollBack();
-            throw $e;
-        }
+    public static function obterTitulo(int $idCampanha): string {
+        $pdo = Database::getConnection();
+        $sql = "SELECT titulo FROM Campanha WHERE idCampanha = :idCampanha";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idCampanha' => $idCampanha]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['titulo'] : '';
     }
 
     public static function editarCampanha(Campanha $campanha): string

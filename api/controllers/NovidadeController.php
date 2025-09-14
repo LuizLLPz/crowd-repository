@@ -8,6 +8,7 @@ use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\tipos\http\tipos\Link;
 use modules\core\tipos\LinkRel;
+use services\campanha\NovidadeService;
 
 class NovidadeController extends ControllerBase
 {
@@ -22,7 +23,7 @@ class NovidadeController extends ControllerBase
     #[HttpPost('/novidade')]
     public function salvar(Novidade $novidade): void
     {
-        $url = Novidade::criar_noticia($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
+        $url = NovidadeService::criar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
         $link = new Link(LinkRel::SELF, $url, "Novidade criada");
         $links = array($link);
         echo json_encode(['message' => "Novidade criada com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
