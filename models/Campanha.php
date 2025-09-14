@@ -32,7 +32,7 @@ class Campanha extends Entidade
     public bool $inscritoUsuario;
     public int $qtdDenuncias;
 
-    public static function buscarCampanhas(?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
+    public static function buscarCampanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
 
         $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
@@ -55,6 +55,10 @@ class Campanha extends Entidade
         if ($idUsuario) {
             $where[] = "C.idUsuario = :idUsuario";
             $params[':idUsuario'] = $idUsuario;
+        }
+
+        if ($idUsuario == null && !$administrador) {
+           $where[] = "C.status = 1";
         }
 
         if (!empty($where)) {
@@ -104,12 +108,11 @@ class Campanha extends Entidade
 
     }
 
-    public static function criar_campanha(Campanha $campanha): string
+    public static function criar_campanha(Campanha $campanha)
     {
         $pdo = Database::getConnection();
 
         try {
-            $pdo->beginTransaction();
 
             $sql = "INSERT INTO Campanha (
                     idUsuario,
@@ -176,42 +179,19 @@ class Campanha extends Entidade
                 }
             }
 
-            $pdo->commit();
-
-            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
         } catch (\Exception $e) {
-            $pdo->rollBack();
             throw $e;
         }
     }
 
-    public static function aprovarCampanha(int $idCampanha, int $statusAntigo, int $idAprovador): string
+    public static function alterar_status(int $idCampanha, int $status): void
     {
         $pdo = Database::getConnection();
-
-        try {
-            $pdo->beginTransaction();
-            $stmt = $pdo->prepare("UPDATE Campanha SET status = 1 WHERE idCampanha = :idCampanha");
-            $stmt->execute([
-                ':idCampanha' => $idCampanha
-            ]);
-
-            $historico = new HistoricoCampanha();
-            $historico->idCampanha = $idCampanha;
-            $historico->statusAntigo = $statusAntigo;
-            $historico->statusNovo = 1;
-            $historico->idCriador = $idAprovador;
-            $historico->descricao = "Campanha aprovada";
-
-            HistoricoCampanha::salvarHistorico($historico);
-
-            $pdo->commit();
-
-            return "Campanha aprovada";
-        } catch (\Exception $e) {
-            $pdo->rollBack();
-            throw $e;
-        }
+        $stmt = $pdo->prepare("UPDATE Campanha SET status = :status WHERE idCampanha = :idCampanha");
+        $stmt->execute([
+            ':status' => $status,
+            ':idCampanha' => $idCampanha
+        ]);
     }
 
     public static function obterTitulo(int $idCampanha): string {

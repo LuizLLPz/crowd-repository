@@ -47,8 +47,8 @@ class DenunciaService
             $notificacao = new Notificacao();
             $notificacao->idUsuario = $denuncia->idUsuario;
             $notificacao->titulo = "Denúncia Atendida";
-            $notificacao->descricao = "Sua denúncia com relação a/o" . $denuncia->tipoAlvo . " foi atendida.";
-            $notificacao->descricao .= $denuncia->status == "Aprovada" ? "foi atendida!" : "foi reprovada! Para mais informações entre em contato conosco!";
+            $notificacao->descricao = "Sua denúncia com relação a/o " . strtolower($denuncia->tipoAlvo);
+            $notificacao->descricao .= $denuncia->status == "Aprovada" ? " foi atendida!" : " foi reprovada! Para mais informações entre em contato conosco!";
             $notificacao->tipo = "denuncia_atendida";
             $notificacao->idItem = $denuncia->idAlvo;
             Notificacao::criar($notificacao);
