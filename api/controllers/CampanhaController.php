@@ -47,17 +47,24 @@ class CampanhaController extends ControllerBase
     }
 
     #[HttpPut('/campanha')]
-    public function editarPut(Campanha $campanha): void
+    public function editar_put(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $msg = CampanhaService::editar_campanha($campanha);
         echo json_encode(['data' => ['message' => $msg]], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
+    #[HttpPost('/campanha/reprovar')]
+    public function reprovar_campanha(Campanha $campanha): void
+    {
+        CampanhaService::reprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "campanha reprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
     #[HttpPost('/campanha/aprovar')]
-    public function aprovarCampanha(Campanha $campanha): void
+    public function aprovar_campanha(Campanha $campanha): void
     {
         CampanhaService::aprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
-        echo json_encode(['message' => "campanha aprovado"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        echo json_encode(['message' => "campanha aprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

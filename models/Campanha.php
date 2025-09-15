@@ -6,7 +6,6 @@ use models\campanha\Denuncia;
 use models\campanha\enums\TipoAlvo;
 use models\campanha\InscricaoCampanha;
 use modules\core\tipos\Entidade;
-use modules\core\utils\File;
 use modules\core\utils\Utils;
 use modules\db\Database;
 

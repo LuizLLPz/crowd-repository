@@ -81,6 +81,43 @@ class CampanhaService
         }
     }
 
+    public static function reprovar_campanha(int $idCampanha, int $statusAntigo, int $idAprovador): string
+    {
+        $pdo = Database::getConnection();
+
+        try {
+            Campanha::alterar_status($idCampanha, 4);
+
+            $pdo->beginTransaction();
+
+            $historico = new HistoricoCampanha();
+            $historico->idCampanha = $idCampanha;
+            $historico->statusAntigo = $statusAntigo;
+            $historico->statusNovo = 4;
+            $historico->idCriador = $idAprovador;
+            $historico->descricao = "Campanha reprovada pelo administrador";
+
+            $campanha = Campanha::obterCampanha($idCampanha);
+            $notificacao = new Notificacao();
+            $notificacao->idUsuario = $campanha['idUsuario'];
+            $notificacao->titulo = "Campanha Rerovada!";
+            $notificacao->descricao = "Sua campanha '{$campanha['titulo']}' foi reprovada :(";
+            $notificacao->tipo = "campanha_reprovada";
+            $notificacao->idItem = $idCampanha;
+
+            Notificacao::criar($notificacao);
+            HistoricoCampanha::salvarHistorico($historico);
+            $pdo->commit();
+
+            SocketService::notificar([$notificacao]);
+
+            return "Campanha reprovada";
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
 
     public static function aprovar_campanha(int $idCampanha, int $statusAntigo, int $idAprovador): string
     {
