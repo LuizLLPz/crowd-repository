@@ -175,8 +175,7 @@ class Campanha extends Entidade
                         titulo = :titulo,
                         roadmap = :roadmap,
                         idCategoria = :idCategoria,
-                        metaArrecadacao = :metaArrecadacao,
-                        caminhoImagem = :caminhoImagem
+                        metaArrecadacao = :metaArrecadacao
                     WHERE idCampanha = :idCampanha";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
@@ -184,7 +183,6 @@ class Campanha extends Entidade
                 ':roadmap' => $campanha->roadmap,
                 ':idCategoria' => $campanha->idCategoria,
                 ':metaArrecadacao' => $campanha->metaArrecadacao,
-                ':caminhoImagem' => $campanha->caminhoImagem,
                 ':idCampanha' => $campanha->idCampanha
             ]);
             return "Campanha atualizada com sucesso!";
