@@ -14,6 +14,7 @@ class Mensagens extends Entidade
     public string $nomeTabela = "Mensagens";
     public ?string $criadoEm = null;
     public ?string $lidoEm = null;
+    public string $mensagem = "";
 
     public function __construct()
     {
@@ -47,6 +48,7 @@ class Mensagens extends Entidade
     public static function criarMensagem(int $idChat, int $idUsuario, string $mensagem): string
     {
         $pdo = Database::getConnection();
+        $pdo->beginTransaction();
         $sql = "INSERT INTO Mensagens (chatId, usuarioId, mensagem) 
         VALUES (:chatId, :usuarioId, :mensagem)";
         $stmt = $pdo->prepare($sql);

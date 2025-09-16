@@ -157,11 +157,11 @@ class CampanhaService
     }
 
 
-    public static function desativarCampanha(int $idCampanha, string $statusAntigo, int $idAtendente): void
+    public static function desativarCampanha(int $idCampanha, string $statusAntigo, int $idAtendente, bool $hasTransaction = false): void
     {
         $pdo = Database::getConnection();
         try {
-            $pdo->beginTransaction();
+            if (!$hasTransaction) $pdo->beginTransaction();
             Campanha::alterar_status($idCampanha, 6);
 
             $historico = new HistoricoCampanha();
@@ -173,10 +173,10 @@ class CampanhaService
 
             HistoricoCampanha::salvarHistorico($historico);
 
-            $pdo->commit();
+            if (!$hasTransaction) $pdo->commit();
 
         } catch (\Exception $e) {
-            $pdo->rollBack();
+            if (!$hasTransaction) $pdo->rollBack();
             throw $e;
         }
     }
