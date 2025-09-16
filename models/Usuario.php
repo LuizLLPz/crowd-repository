@@ -5,6 +5,7 @@ namespace models;
 use DateTime;
 use modules\core\tipos\Entidade;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
+use modules\core\utils\Utils;
 use modules\db\Database;
 
 class Usuario extends Entidade
@@ -41,10 +42,36 @@ class Usuario extends Entidade
         $this->$name = $value;
     }
 
-    /**
-     * @return Usuario[]
-     */
+    public static function buscar_usuario(int $idUsuario): Usuario
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->query(new Usuario()->select);
+
+        $stmt = $pdo->prepare(new Usuario()->select." WHERE idUsuario = :idUsuario");
+        $stmt->execute([':idUsuario' => $idUsuario]);
+        $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
+        $usuario = $stmt->fetch();
+
+        if ($usuario && is_string($usuario->funcao)) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
+        }
+
+        if ($usuario->caminhoImagem != null) {
+            $usuario->caminhoImagem = Utils::getServerUrl() . '/' . $usuario->caminhoImagem;
+        }
+
+        return $usuario;
+    }
+
     public static function buscarUsuarios(): array
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->query(new Usuario()->select);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public static function buscar_usuarios(): array
     {
         $pdo = Database::getConnection();
         $stmt = $pdo->query(new Usuario()->select);
@@ -76,6 +103,16 @@ class Usuario extends Entidade
         $usuario->idUsuario = $pdo->lastInsertId();
 
         return "Usuário cadastrado com sucesso!";
+    }
+
+    public static function alterar_caminhoImagem(int $idUsuario, string $caminhoImagem): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Usuario SET caminhoImagem = :caminhoImagem WHERE idUsuario = :idUsuario");
+        $stmt->execute([
+            ':caminhoImagem' => $caminhoImagem,
+            ':idUsuario' => $idUsuario
+        ]);
     }
 
     public static function buscarUsuarioPorEmail(string $nome): Usuario | false

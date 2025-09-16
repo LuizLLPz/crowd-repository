@@ -6,8 +6,11 @@ use models\Campanha;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\tipos\Http\atributos\HttpPut;
+use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\tipos\http\tipos\Link;
 use modules\core\tipos\LinkRel;
+use services\campanha\CampanhaService;
 
 class CampanhaController extends ControllerBase
 {
@@ -26,9 +29,10 @@ class CampanhaController extends ControllerBase
         $categoriaRaw = $_GET['idCategoria'] ?? null;
         $categoria = ($categoriaRaw === '' ? null : (int) $categoriaRaw);
         $campanhasUsuario = $_GET['campanhasUsuario'];
+        $administrador = ControllerBase::$usuarioAutenticado->funcao == FuncaoUsuario::ADMIN;
         $campanhasUsuarioBool = filter_var($campanhasUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         $idUsuario = $campanhasUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
-        $resp = Campanha::buscarCampanhas($pesquisa, $categoria, $idUsuario);
+        $resp = Campanha::buscarCampanhas($administrador, $pesquisa, $categoria, $idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -36,16 +40,31 @@ class CampanhaController extends ControllerBase
     public function salvar(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $url = Campanha::criar_campanha($campanha);
+        $url = CampanhaService::criar_campanha($campanha);
         $link = new Link(LinkRel::SELF, $url, "campanha criado");
         $links = array($link);
         echo json_encode(['message' => "campanha criado com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
-    #[HttpPost('/campanha/aprovar')]
-    public function aprovarCampanha(Campanha $campanha): void
+    #[HttpPut('/campanha')]
+    public function editar_put(Campanha $campanha): void
     {
-        Campanha::aprovarCampanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
-        echo json_encode(['message' => "campanha aprovado"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $msg = CampanhaService::editar_campanha($campanha);
+        echo json_encode(['data' => ['message' => $msg]], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
+    #[HttpPost('/campanha/reprovar')]
+    public function reprovar_campanha(Campanha $campanha): void
+    {
+        CampanhaService::reprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "campanha reprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
+    #[HttpPost('/campanha/aprovar')]
+    public function aprovar_campanha(Campanha $campanha): void
+    {
+        CampanhaService::aprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "campanha aprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

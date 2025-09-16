@@ -5,8 +5,10 @@ use DateTime;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\tipos\Http\atributos\HttpPut;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Http;
+use modules\core\utils\Utils;
 use modules\core\validacoes\Token;
 use ReflectionClass;
 use ReflectionException;
@@ -58,6 +60,10 @@ class Roteador
                 $instanciaAtributo = $atributo->newInstance();
                 $this->rotas['POST'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
             }
+            foreach ($metodo->getAttributes(HttpPut::class) as $atributo) {
+                $instanciaAtributo = $atributo->newInstance();
+                $this->rotas['PUT'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
+            }
         }
     }
 
@@ -68,8 +74,16 @@ class Roteador
             $instancia = new $classe();
 
             $refMetodo = new \ReflectionMethod($classe, $metodo);
-            $atributoClasse = $metodoHttp === 'GET' ? HttpGet::class : HttpPost::class;
-            $atributos = $refMetodo->getAttributes($atributoClasse);
+            if ($metodoHttp === 'GET') {
+                $atributoClasse = HttpGet::class;
+            } elseif ($metodoHttp === 'POST') {
+                $atributoClasse = HttpPost::class;
+            } elseif ($metodoHttp === 'PUT') {
+                $atributoClasse = HttpPut::class;
+            } else {
+                $atributoClasse = null;
+            }
+            $atributos = $atributoClasse ? $refMetodo->getAttributes($atributoClasse) : [];
 
             $precisaAuth = true;
             $funcaoUsuario = FuncaoUsuario::USER;
@@ -91,7 +105,7 @@ class Roteador
                 Http::HttpResponse(403, "Você não tem permissão para acessar essa função");
             }
 
-            if ($metodoHttp === 'POST') {
+            if ($metodoHttp === 'POST' || $metodoHttp === 'PUT') {
                 $parametros = $refMetodo->getParameters();
                 $args = [];
 
@@ -103,7 +117,6 @@ class Roteador
                         if ($tipo && !$tipo->isBuiltin()) {
                             $classeParametro = $tipo->getName();
                             $obj = new $classeParametro();
-
                             foreach ($_POST as $chave => $valor) {
                                 if (property_exists($obj, $chave)) {
                                     $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
@@ -111,6 +124,25 @@ class Roteador
                                         $obj->$chave = new DateTime($valor);
                                     } else {
                                         $obj->$chave = $valor;
+                                    }
+                                }
+                            }
+                            if ($metodoHttp === "PUT") {
+                                $input = file_get_contents('php://input');
+                                $dados = json_decode($input, true);
+
+                                if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') != -1){
+                                    $dados = Utils::parse_multipart_form_data($input);
+                                }
+
+                                foreach ($dados as $chave => $valor) {
+                                    if (property_exists($obj, $chave)) {
+                                        $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
+                                        if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
+                                            $obj->$chave = new DateTime($valor);
+                                        } else {
+                                            $obj->$chave = $valor;
+                                        }
                                     }
                                 }
                             }
