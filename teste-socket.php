@@ -12,7 +12,7 @@ $url = 'http://127.0.0.1:8081/notify';
 $payloadDeTeste = [
     [
         'idNotificacao' => 999,
-        'idUsuario' => 41,
+        'idUsuario' => 32,
         'titulo' => 'TESTE DE SOCKET',
         'descricao' => 'Testando socket!',
         'tipoNotificacao' => 'teste',
