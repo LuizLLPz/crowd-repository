@@ -110,70 +110,49 @@ class Roteador
                 $args = [];
 
                 if (count($parametros) > 0) {
-                    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
                     $parametro = $parametros[0];
                     $tipo = $parametro->getType();
+                    $dados = null;
+                    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
                     if (strpos($contentType, 'multipart/form-data') !== false) {
-                        if ($tipo && !$tipo->isBuiltin()) {
-                            $classeParametro = $tipo->getName();
-                            $obj = new $classeParametro();
-                            foreach ($_POST as $chave => $valor) {
-                                if (property_exists($obj, $chave)) {
-                                    $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
-                                    if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
-                                        $obj->$chave = new DateTime($valor);
-                                    } else {
-                                        $obj->$chave = $valor;
-                                    }
-                                }
-                            }
-                            if ($metodoHttp === "PUT") {
-                                $input = file_get_contents('php://input');
-                                $dados = json_decode($input, true);
-
-                                if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') != -1){
-                                    $dados = Utils::parse_multipart_form_data($input);
-                                }
-
-                                foreach ($dados as $chave => $valor) {
-                                    if (property_exists($obj, $chave)) {
-                                        $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
-                                        if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
-                                            $obj->$chave = new DateTime($valor);
-                                        } else {
-                                            $obj->$chave = $valor;
-                                        }
-                                    }
-                                }
-                            }
-
-                            $args[] = $obj;
-                        } else {
-                            $args[] = $_POST[$parametro->getName()] ?? null;
+                        $dados = $_POST;
+                        if ($metodoHttp === "PUT") {
+                            $input = file_get_contents('php://input');
+                            $dadosPut = Utils::parse_multipart_form_data($input);
+                            $dados = array_merge($dados, $dadosPut);
                         }
                     } else {
                         $input = file_get_contents('php://input');
                         $dados = json_decode($input, true);
+                    }
 
-                        if ($tipo && !$tipo->isBuiltin()) {
-                            $classeParametro = $tipo->getName();
-                            $obj = new $classeParametro();
+                    if ($tipo && !$tipo->isBuiltin()) {
+                        $classeParametro = $tipo->getName();
+                        $obj = new $classeParametro();
 
+                        if (is_array($dados)) {
                             foreach ($dados as $chave => $valor) {
                                 if (property_exists($obj, $chave)) {
-                                    $tipoPropriedade = new ReflectionProperty($obj, $chave)->getType();
-                                    if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
-                                        $obj->$chave = new DateTime($valor);
-                                    } else {
-                                        $obj->$chave = $valor;
+                                    try {
+                                        $propriedade = new ReflectionProperty($obj, $chave);
+                                        if (!$propriedade->isReadOnly()) {
+                                            $tipoPropriedade = $propriedade->getType();
+                                            if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
+                                                $obj->$chave = new DateTime($valor);
+                                            } else {
+                                                $obj->$chave = $valor;
+                                            }
+                                        }
+                                    } catch (\Error $e) {
+                                        continue;
                                     }
                                 }
                             }
-
-                            $args[] = $obj;
-                        } else {
-                            $args[] = $dados[$parametro->getName()] ?? null;
                         }
+                        $args[] = $obj;
+                    } else {
+                        $args[] = $dados[$parametro->getName()] ?? null;
                     }
                 }
 

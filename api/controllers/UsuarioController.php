@@ -7,6 +7,7 @@ use models\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\tipos\Http\atributos\HttpPut;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;
 use services\integrations\email\EmailService;
@@ -45,6 +46,15 @@ class UsuarioController extends ControllerBase {
             'email' => $usuario->email,
         ]);
     }
+
+    #[HttpPut("/usuario/editarPerfil")]
+    public function editarPerfil(Usuario $usuario): void
+    {
+        $usuario->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $msg = UsuarioService::editar_usuario($usuario);
+        echo json_encode(['data' => ['message' => $msg]], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
 
     #[HttpPost('/verificarConta')]
     public function verificarConta(Usuario $usuario): void

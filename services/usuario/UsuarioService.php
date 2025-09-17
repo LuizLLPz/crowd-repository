@@ -61,4 +61,35 @@ class UsuarioService {
 
         return $resp;
     }
+
+    public static function editar_usuario(Usuario $usuario): string {
+        $pdo = Database::getConnection();
+        try {
+            $pdo->beginTransaction();
+            $usuarioAntigo = Usuario::buscar_usuario($usuario->idUsuario);
+
+            Usuario::editar_usuario($usuario);
+
+            if (isset($_FILES['imagem'])) {
+                $imagemPerfil = $_FILES['imagem'];
+                $nomeArquivo = "perfil-{$usuario->idUsuario}.".pathinfo($imagemPerfil['name'], PATHINFO_EXTENSION);
+                $resultadoUpload = File::salvarImagem($imagemPerfil, $nomeArquivo);
+                if ($resultadoUpload['success']) {
+                    $usuario->caminhoImagem = $resultadoUpload['relativePath'];
+                    Usuario::alterar_caminhoImagem($usuario->idUsuario, $usuario->caminhoImagem);
+                } else {
+                    throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
+                }
+            } else if (!empty($usuarioAntigo->caminhoImagem) && empty($usuario->caminhoImagem)) {
+                File::delete($usuarioAntigo->caminhoImagem);
+                $usuario->caminhoImagem = '';
+                Usuario::alterar_caminhoImagem($usuario->idUsuario, $usuario->caminhoImagem);
+            }
+            $pdo->commit();
+            return "Usuário atualizado com sucesso!";
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
 }
