@@ -58,13 +58,21 @@ class CampanhaController extends ControllerBase
     public function reprovar_campanha(Campanha $campanha): void
     {
         CampanhaService::reprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
-        echo json_encode(['message' => "campanha reprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        echo json_encode(['message' => "C   ampanha reprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
     #[HttpPost('/campanha/aprovar')]
     public function aprovar_campanha(Campanha $campanha): void
     {
         CampanhaService::aprovar_campanha($campanha->idCampanha, $campanha->status, ControllerBase::$usuarioAutenticado->idUsuario);
-        echo json_encode(['message' => "campanha aprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        echo json_encode(['message' => "Campanha aprovada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
+
+    #[HttpPost('/campanha/desativar')]
+    public function desativar_campanha(Campanha $campanha): void
+    {
+        CampanhaService::desativar_campanha($campanha->idCampanha, $campanha->status, idAtendente: ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "Campanha desativada"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
 }

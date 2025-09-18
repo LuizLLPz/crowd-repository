@@ -18,6 +18,22 @@ class Novidade extends Entidade
     public string $descricao;
     public string $imagem;
     public int $quantidadeLikes;
+    public int $idUsuario;
+    public ?string $nomeAutor = "";
+    public ?string $caminhoFotoAutor = "";
+
+    public static function obter(int $idNovidade): array {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor FROM Novidade N JOIN Usuario U ON U.idUsuario = N.idUsuario WHERE N.id = :idNovidade");
+
+        $stmt->execute([':idNovidade' => $idNovidade]);
+        $novidade = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($novidade && !empty($novidade['imagem'])) {
+            $novidade['imagem'] = Utils::getServerUrl() . '/' . $novidade['imagem'];
+        }
+        return $novidade;
+    }
 
     public static function listar(int $idCampanha): array {
         $pdo = Database::getConnection();

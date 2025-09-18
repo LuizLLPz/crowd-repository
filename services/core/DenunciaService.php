@@ -39,7 +39,7 @@ class DenunciaService
             switch ($denuncia->tipoAlvo) {
                 case 'Campanha':
                     if ($denuncia->status == "Aprovada")
-                        CampanhaService::desativarCampanha($denuncia->idAlvo, 1, $denuncia->idAtendente, hasTransaction: true);
+                        CampanhaService::desativar_campanha($denuncia->idAlvo, 1, $denuncia->idAtendente, hasTransaction: true);
                     break;
             }
 

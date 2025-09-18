@@ -157,7 +157,7 @@ class CampanhaService
     }
 
 
-    public static function desativarCampanha(int $idCampanha, string $statusAntigo, int $idAtendente, bool $hasTransaction = false): void
+    public static function desativar_campanha(int $idCampanha, string $statusAntigo, int $idAtendente, bool $hasTransaction = false): void
     {
         $pdo = Database::getConnection();
         try {

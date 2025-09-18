@@ -12,6 +12,14 @@ use services\campanha\NovidadeService;
 
 class NovidadeController extends ControllerBase
 {
+    #[HttpGet('/novidade')]
+    public function obter(): void
+    {
+        $idNovidade = $_GET["idNovidade"];
+        $resp = Novidade::obter($idNovidade);
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
     #[HttpGet('/novidades')]
     public function listar(): void
     {
