@@ -2,6 +2,7 @@
 
 namespace models;
 
+use models\campanha\enums\TipoAlvo;
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
 use modules\core\utils\Utils;
@@ -21,31 +22,44 @@ class Novidade extends Entidade
     public int $idUsuario;
     public ?string $nomeAutor = "";
     public ?string $caminhoFotoAutor = "";
+    public string $descCargoAutor = "";
+    public bool $curtidaUsuario = false;
 
-    public static function obter(int $idNovidade): array {
+    public static function obter(int $idNovidade, int $idUsuario): array {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor FROM Novidade N JOIN Usuario U ON U.idUsuario = N.idUsuario WHERE N.id = :idNovidade");
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor FROM Novidade N 
+                                     JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo
+                                     WHERE N.id = :idNovidade");
 
         $stmt->execute([':idNovidade' => $idNovidade]);
         $novidade = $stmt->fetch(\PDO::FETCH_ASSOC);
 
+        $novidade['curtidaUsuario'] = Curtida::buscar_curtido_usuario($idUsuario, $novidade['id'], TipoAlvo::NOVIDADE->value);
         if ($novidade && !empty($novidade['imagem'])) {
             $novidade['imagem'] = Utils::getServerUrl() . '/' . $novidade['imagem'];
+        }
+        if (!empty($novidade['caminhoFotoAutor'])) {
+            $novidade['caminhoFotoAutor'] = Utils::getServerUrl() . '/' . $novidade['caminhoFotoAutor'];
         }
         return $novidade;
     }
 
-    public static function listar(int $idCampanha): array {
+    public static function listar(int $idCampanha, int $idUsuario): array {
         $pdo = Database::getConnection();
 
-        $sqlString = (new Novidade()->select) . " WHERE idCampanha = :idCampanha ORDER BY dataCriacao DESC";
-        $stmt = $pdo->prepare($sqlString);
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor FROM Novidade N
+                                     JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo
+                                     WHERE N.idCampanha = :idCampanha ORDER BY N.dataCriacao DESC");
         $stmt->execute([':idCampanha' => $idCampanha]);
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($novidades as &$novidade) {
+            $novidade['curtidaUsuario'] = Curtida::buscar_curtido_usuario($idUsuario, $novidade['id'], TipoAlvo::NOVIDADE->value);
             if (!empty($novidade['imagem'])) {
                 $novidade['imagem'] = Utils::getServerUrl() . '/' . $novidade['imagem'];
+            }
+            if (!empty($novidade['caminhoFotoAutor'])) {
+                $novidade['caminhoFotoAutor'] = Utils::getServerUrl() . '/' . $novidade['caminhoFotoAutor'];
             }
         }
         return $novidades;
@@ -83,4 +97,5 @@ class Novidade extends Entidade
         }
         return $novidade;
     }
+
 }

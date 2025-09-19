@@ -16,7 +16,7 @@ use services\usuario\UsuarioService;
 class UsuarioController extends ControllerBase {
 
     #[HttpGet('/usuario')]
-    public function buscarUsuario(): void
+    public function buscar_usuario(): void
     {
         $idUsuario = $_GET['idUsuario'] ?? null;
         $resp = Usuario::buscar_usuario($idUsuario);
@@ -33,7 +33,7 @@ class UsuarioController extends ControllerBase {
     #[HttpPost('/usuario', auth: false)]
     public function salvar(Usuario $usuario): void
     {
-        $usuarioConsulta = Usuario::buscarUsuarioPorEmail($usuario->email);
+        $usuarioConsulta = Usuario::buscar_usuario_por_email($usuario->email);
         if ($usuarioConsulta) {
             Http::HttpResponse(409, "Email já cadastrado");
         }
@@ -48,7 +48,7 @@ class UsuarioController extends ControllerBase {
     }
 
     #[HttpPut("/usuario/editarPerfil")]
-    public function editarPerfil(Usuario $usuario): void
+    public function editar_perfil(Usuario $usuario): void
     {
         $usuario->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $msg = UsuarioService::editar_usuario($usuario);
@@ -57,7 +57,7 @@ class UsuarioController extends ControllerBase {
 
 
     #[HttpPost('/verificarConta')]
-    public function verificarConta(Usuario $usuario): void
+    public function verificar_conta(Usuario $usuario): void
     {
         $resultado = Usuario::buscarUsuarioPorId($usuario->idUsuario);
         $agora = new \DateTime();
@@ -82,7 +82,7 @@ class UsuarioController extends ControllerBase {
     }
 
     #[HttpPost('/reenviarCodigo')]
-    public function reenviarCodigo(Usuario $usuario): void
+    public function reenviar_codigo(Usuario $usuario): void
     {
         $result = Usuario::buscarUsuarioPorId($usuario->idUsuario);
         Usuario::gerarNovoCodigo($result);

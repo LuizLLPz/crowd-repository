@@ -31,7 +31,7 @@ class Campanha extends Entidade
     public bool $inscritoUsuario;
     public int $qtdDenuncias;
 
-    public static function buscarCampanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null): array {
+    public static function buscar_campanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null, ?bool $painelAdministrador = false): array {
         $pdo = Database::getConnection();
 
         $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
@@ -60,6 +60,10 @@ class Campanha extends Entidade
            $where[] = "C.status = 1";
         }
 
+        if (!$painelAdministrador) {
+            $where[] = "C.status not in (5,6) ";
+        }
+
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
         }
@@ -83,7 +87,7 @@ class Campanha extends Entidade
     }
 
 
-    public static function obterCampanha(int $idCampanha, ?int $idUsuario = null): array {
+    public static function obter_campanha(int $idCampanha, ?int $idUsuario = null): array {
         $pdo = Database::getConnection();
         $sql = "SELECT P.*, C.titulo AS categoria FROM Campanha P 
          LEFT JOIN Categoria C ON C.id = P.idCategoria

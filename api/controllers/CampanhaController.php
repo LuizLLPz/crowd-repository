@@ -18,7 +18,7 @@ class CampanhaController extends ControllerBase
     public function obter(): void
     {
         $idCampanha = $_GET["idCampanha"];
-        $resp = Campanha::obterCampanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
+        $resp = Campanha::obter_campanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -32,7 +32,7 @@ class CampanhaController extends ControllerBase
         $administrador = ControllerBase::$usuarioAutenticado->funcao == FuncaoUsuario::ADMIN;
         $campanhasUsuarioBool = filter_var($campanhasUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         $idUsuario = $campanhasUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
-        $resp = Campanha::buscarCampanhas($administrador, $pesquisa, $categoria, $idUsuario);
+        $resp = Campanha::buscar_campanhas($administrador, $pesquisa, $categoria, $idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 

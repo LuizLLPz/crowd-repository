@@ -141,7 +141,7 @@ class Usuario extends Entidade
         ]);
     }
 
-    public static function buscarUsuarioPorEmail(string $nome): Usuario | false
+    public static function buscar_usuario_por_email(string $nome): Usuario | false
     {
         $pdo = Database::getConnection();
         $sql = new Usuario()->select." WHERE email = :nomeUsuario";

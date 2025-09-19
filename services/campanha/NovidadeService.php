@@ -2,6 +2,8 @@
 namespace services\campanha;
 
 use models\Campanha;
+use models\campanha\enums\TipoAlvo;
+use models\Curtida;
 use models\Novidade;
 use models\campanha\InscricaoCampanha;
 use models\Notificacao;
@@ -50,4 +52,22 @@ class NovidadeService
             throw $e;
         }
     }
+
+    public static function curtir_novidade(int $idNovidade, string $idUsuario) {
+        $pdo = Database::getConnection();
+        try {
+            $pdo->beginTransaction();
+            $curtida = new Curtida();
+            $curtida->idAlvo = $idNovidade;
+            $curtida->idUsuario = $idUsuario;
+            $curtida->tipoAlvo = TipoAlvo::NOVIDADE->value;
+            $removerCurtida = Curtida::salvar_curtida($curtida);
+            $pdo->commit();
+
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
 }

@@ -57,7 +57,7 @@ class DenunciaService
             $notificacaoDono = new Notificacao();
             $idDonoAlvo = 0;
             if ($denuncia->tipoAlvo == 'Campanha') {
-                $campanha = Campanha::obterCampanha($denuncia->idAlvo);
+                $campanha = Campanha::obter_campanha($denuncia->idAlvo);
                 $idDonoAlvo = $campanha['idUsuario'];
             }
             if ($denuncia->status == "Aprovada") {
