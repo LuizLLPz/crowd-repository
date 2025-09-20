@@ -30,7 +30,7 @@ class MensagensController extends ControllerBase
     #[HttpPost('/enviarmensagem')]
     public function enviarMensagem(Mensagens $mensagem): void
     {
-        $url = Mensagens::criarMensagem($mensagem->chatId, $mensagem->usuarioId, $mensagem->mensagem);
+        $url = Mensagens::criarMensagem($mensagem->chatId, ControllerBase::$usuarioAutenticado->idUsuario, $mensagem->mensagem);
         echo json_encode(['message' => "Mensagem feita com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
