@@ -3,6 +3,8 @@
 namespace models;
 
 use models\campanha\Denuncia;
+use models\campanha\enums\FiltroCampanha;
+use models\campanha\enums\StatusCampanha;
 use models\campanha\enums\TipoAlvo;
 use models\campanha\InscricaoCampanha;
 use modules\core\tipos\Entidade;
@@ -30,8 +32,7 @@ class Campanha extends Entidade
     public bool $denunciadoUsuario;
     public bool $inscritoUsuario;
     public int $qtdDenuncias;
-
-    public static function buscar_campanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null, ?bool $painelAdministrador = false): array {
+    public static function buscar_campanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null, ?int $filtroAdministrador = null): array {
         $pdo = Database::getConnection();
 
         $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
@@ -60,8 +61,9 @@ class Campanha extends Entidade
            $where[] = "C.status = 1";
         }
 
-        if (!$painelAdministrador) {
-            $where[] = "C.status not in (5,6) ";
+        if ($filtroAdministrador != null) {
+           $where[] = "C.status = :filtroAdministrador";
+            $params[':filtroAdministrador'] = $filtroAdministrador;
         }
 
         if (!empty($where)) {

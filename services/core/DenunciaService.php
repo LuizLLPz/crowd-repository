@@ -30,7 +30,7 @@ class DenunciaService
         return $res;
     }
 
-    public static function atenderDenuncia(Denuncia $denuncia): void
+    public static function atender_denuncia(Denuncia $denuncia): void
     {
         $pdo = Database::getConnection();
         try {
