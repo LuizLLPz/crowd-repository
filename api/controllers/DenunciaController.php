@@ -30,10 +30,10 @@ class DenunciaController extends ControllerBase
     }
 
    #[HttpPost('/denuncia/atender', funcaoUsuario: FuncaoUsuario::ADMIN)]
-    public function atenderDenuncia(Denuncia $denuncia): void
+    public function atender_denuncia(Denuncia $denuncia): void
     {
         $denuncia->idAtendente = ControllerBase::$usuarioAutenticado->idUsuario;
-        DenunciaService::atenderDenuncia($denuncia);
+        DenunciaService::atender_denuncia($denuncia);
         Http::HttpResponse(200, "Denúncia atendida com sucesso!");
     }
 }

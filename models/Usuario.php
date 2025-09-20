@@ -26,6 +26,7 @@ class Usuario extends Entidade
     public ?string $instagram = '';
     public ?string $descricao = '';
     public ?int $idCargo = null;
+    public ?string $descricaoCargo = null;
 
     public function __construct()
     {
@@ -47,7 +48,7 @@ class Usuario extends Entidade
         $pdo = Database::getConnection();
         $stmt = $pdo->query(new Usuario()->select);
 
-        $stmt = $pdo->prepare(new Usuario()->select." WHERE idUsuario = :idUsuario");
+        $stmt = $pdo->prepare("SELECT U.*, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
@@ -105,6 +106,31 @@ class Usuario extends Entidade
         return "Usuário cadastrado com sucesso!";
     }
 
+    public static function editar_usuario(Usuario $usuario): void
+    {
+        $pdo = Database::getConnection();
+        $sql = "UPDATE Usuario SET 
+                    nomeUsuario = :nomeUsuario,
+                    telefone = :telefone,
+                    linkedin = :linkedin,
+                    github = :github,
+                    instagram = :instagram,
+                    descricao = :descricao,
+                    idCargo = :idCargo
+                WHERE idUsuario = :idUsuario";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':nomeUsuario' => $usuario->nomeUsuario,
+            ':telefone' => $usuario->telefone,
+            ':linkedin' => $usuario->linkedin,
+            ':github' => $usuario->github,
+            ':instagram' => $usuario->instagram,
+            ':descricao' => $usuario->descricao,
+            ':idCargo' => $usuario->idCargo,
+            ':idUsuario' => $usuario->idUsuario
+        ]);
+    }
+
     public static function alterar_caminhoImagem(int $idUsuario, string $caminhoImagem): void
     {
         $pdo = Database::getConnection();
@@ -115,7 +141,7 @@ class Usuario extends Entidade
         ]);
     }
 
-    public static function buscarUsuarioPorEmail(string $nome): Usuario | false
+    public static function buscar_usuario_por_email(string $nome): Usuario | false
     {
         $pdo = Database::getConnection();
         $sql = new Usuario()->select." WHERE email = :nomeUsuario";

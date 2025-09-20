@@ -12,11 +12,19 @@ use services\campanha\NovidadeService;
 
 class NovidadeController extends ControllerBase
 {
+    #[HttpGet('/novidade')]
+    public function obter(): void
+    {
+        $idNovidade = $_GET["idNovidade"];
+        $resp = Novidade::obter($idNovidade, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
     #[HttpGet('/novidades')]
     public function listar(): void
     {
         $idCampanha = $_GET['idCampanha'];
-        $resp = Novidade::listar($idCampanha);
+        $resp = Novidade::listar($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -27,5 +35,12 @@ class NovidadeController extends ControllerBase
         $link = new Link(LinkRel::SELF, $url, "Novidade criada");
         $links = array($link);
         echo json_encode(['message' => "Novidade criada com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
+    #[HttpPost('/novidade/curtir')]
+    public function curtir(Novidade $novidade): void
+    {
+        NovidadeService::curtir_novidade($novidade->id, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "Comentario curtido com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 }

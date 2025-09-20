@@ -30,7 +30,7 @@ class DenunciaService
         return $res;
     }
 
-    public static function atenderDenuncia(Denuncia $denuncia): void
+    public static function atender_denuncia(Denuncia $denuncia): void
     {
         $pdo = Database::getConnection();
         try {
@@ -39,7 +39,7 @@ class DenunciaService
             switch ($denuncia->tipoAlvo) {
                 case 'Campanha':
                     if ($denuncia->status == "Aprovada")
-                        CampanhaService::desativarCampanha($denuncia->idAlvo, 1, $denuncia->idAtendente, hasTransaction: true);
+                        CampanhaService::desativar_campanha($denuncia->idAlvo, 1, $denuncia->idAtendente, hasTransaction: true);
                     break;
             }
 
@@ -57,7 +57,7 @@ class DenunciaService
             $notificacaoDono = new Notificacao();
             $idDonoAlvo = 0;
             if ($denuncia->tipoAlvo == 'Campanha') {
-                $campanha = Campanha::obterCampanha($denuncia->idAlvo);
+                $campanha = Campanha::obter_campanha($denuncia->idAlvo);
                 $idDonoAlvo = $campanha['idUsuario'];
             }
             if ($denuncia->status == "Aprovada") {

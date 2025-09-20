@@ -53,7 +53,7 @@ class CampanhaService
         $pdo = Database::getConnection();
         try {
             $pdo->beginTransaction();
-            $campanhaAntiga = Campanha::obterCampanha($campanha->idCampanha);
+            $campanhaAntiga = Campanha::obter_campanha($campanha->idCampanha);
 
             Campanha::editar_campanha($campanha);
 
@@ -97,7 +97,7 @@ class CampanhaService
             $historico->idCriador = $idAprovador;
             $historico->descricao = "Campanha reprovada pelo administrador";
 
-            $campanha = Campanha::obterCampanha($idCampanha);
+            $campanha = Campanha::obter_campanha($idCampanha);
             $notificacao = new Notificacao();
             $notificacao->idUsuario = $campanha['idUsuario'];
             $notificacao->titulo = "Campanha Rerovada!";
@@ -135,7 +135,7 @@ class CampanhaService
             $historico->idCriador = $idAprovador;
             $historico->descricao = "Campanha aprovada pelo administrador";
 
-            $campanha = Campanha::obterCampanha($idCampanha);
+            $campanha = Campanha::obter_campanha($idCampanha);
             $notificacao = new Notificacao();
             $notificacao->idUsuario = $campanha['idUsuario'];
             $notificacao->titulo = "Campanha Aprovada!";
@@ -157,7 +157,7 @@ class CampanhaService
     }
 
 
-    public static function desativarCampanha(int $idCampanha, string $statusAntigo, int $idAtendente, bool $hasTransaction = false): void
+    public static function desativar_campanha(int $idCampanha, string $statusAntigo, int $idAtendente, bool $hasTransaction = false): void
     {
         $pdo = Database::getConnection();
         try {
