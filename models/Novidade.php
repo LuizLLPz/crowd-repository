@@ -18,7 +18,8 @@ class Novidade extends Entidade
     public string $titulo;
     public string $descricao;
     public string $imagem;
-    public int $quantidadeLikes;
+    public int $qtdLikes;
+    public int $qtdComentarios;
     public int $idUsuario;
     public ?string $nomeAutor = "";
     public ?string $caminhoFotoAutor = "";
@@ -27,7 +28,9 @@ class Novidade extends Entidade
 
     public static function obter(int $idNovidade, int $idUsuario): array {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor FROM Novidade N 
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor,
+                                     (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios
+                                     FROM Novidade N 
                                      JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo
                                      WHERE N.id = :idNovidade");
 
@@ -47,8 +50,9 @@ class Novidade extends Entidade
     public static function listar(int $idCampanha, int $idUsuario): array {
         $pdo = Database::getConnection();
 
-        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor FROM Novidade N
-                                     JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor, 
+                                     (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios
+                                     FROM Novidade N JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo
                                      WHERE N.idCampanha = :idCampanha ORDER BY N.dataCriacao DESC");
         $stmt->execute([':idCampanha' => $idCampanha]);
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);

@@ -30,7 +30,7 @@ class ComentarioService
             $curtida->idAlvo = $idComentario;
             $curtida->idUsuario = $idUsuario;
             $curtida->tipoAlvo = TipoAlvo::COMENTARIO->value;
-            $removerCurtida = Curtida::salvar_curtida($curtida);
+            Curtida::salvar_curtida($curtida);
             $pdo->commit();
 
         } catch (\Exception $e) {

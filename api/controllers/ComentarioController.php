@@ -14,7 +14,7 @@ class ComentarioController extends ControllerBase
     public function listar(): void
     {
         $idCampanha = $_GET['idNovidade'];
-        $resp = Comentario::listar($idCampanha);
+        $resp = Comentario::listar($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -28,7 +28,7 @@ class ComentarioController extends ControllerBase
     #[HttpPost('/novidade/comentario/curtir')]
     public function curtir(Comentario $comentario): void
     {
-        ComentarioService::curtir_comentario($comentario->idComentario, ControllerBase::$usuarioAutenticado->idUsuario);
+        ComentarioService::curtir_comentario($comentario->id, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode(['message' => "Comentario curtido com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 

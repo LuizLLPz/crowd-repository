@@ -9,7 +9,7 @@ use modules\db\Database;
 class Comentario extends Entidade
 {
     public string $nomeTabela = "Comentario";
-    public ?int $idComentario = null;
+    public ?int $id = null;
     public string $comentario;
     public ?string $caminhoImagem = null;
     public int $idNovidade;
@@ -24,12 +24,12 @@ class Comentario extends Entidade
     public ?string $descricaoCargoAutor = null;
 
 
-    public static function listar(int $idNovidade): array {
+    public static function listar(int $idNovidade, int $idUsuario): array {
         $pdo = Database::getConnection();
 
         $sqlString = "
             SELECT
-                c.idComentario,
+                c.id,
                 c.comentario,
                 c.caminhoImagem,
                 c.dataCriacao,
@@ -37,11 +37,12 @@ class Comentario extends Entidade
                 c.indicePilha,
                 c.idComentarioReferenciado,
                 c.qtdCurtidas,
-                COUNT(cr.idComentario) AS qtdComentarios,
+                COUNT(cr.id) AS qtdComentarios,
                 u.idUsuario AS idAutor,
                 u.nomeUsuario AS nomeAutor,
                 u.caminhoImagem AS caminhoFotoAutor,
-                ca.titulo AS descricaoCargoAutor
+                ca.titulo AS descricaoCargoAutor,
+                (IF(ct.idUsuario IS NOT NULL, TRUE, FALSE)) AS curtidaUsuario
             FROM
                 Comentario c
             JOIN
@@ -49,17 +50,19 @@ class Comentario extends Entidade
             JOIN
                 Cargo ca ON ca.id = u.idCargo
             LEFT JOIN
-                Comentario cr ON c.idComentario = cr.idComentarioReferenciado
+                Comentario cr ON c.id = cr.idComentarioReferenciado
+            LEFT JOIN 
+                Curtida ct ON ct.idAlvo = c.id AND ct.tipoAlvo = 'Comentario' AND ct.idUsuario = :idUsuario
             WHERE
                 c.idNovidade = :idNovidade
             GROUP BY
-                c.dataCriacao, c.idComentario, u.idUsuario, u.nomeUsuario, u.caminhoImagem, ca.titulo
+                c.dataCriacao, c.id, u.idUsuario, u.nomeUsuario, u.caminhoImagem, ca.titulo, curtidaUsuario
             ORDER BY
                 c.dataCriacao;
         ";
 
         $stmt = $pdo->prepare($sqlString);
-        $stmt->execute([':idNovidade' => $idNovidade]);
+        $stmt->execute([':idNovidade' => $idNovidade, ':idUsuario' => $idUsuario]);
         $comentarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($comentarios as &$comentario) {
@@ -77,7 +80,7 @@ class Comentario extends Entidade
         $pdo = Database::getConnection();
         $indicePilha = 0;
         if ($comentario->idComentarioReferenciado !== null) {
-            $stmtParent = $pdo->prepare("SELECT indicePilha FROM Comentario WHERE idComentario = :idComentarioReferenciado");
+            $stmtParent = $pdo->prepare("SELECT indicePilha FROM Comentario WHERE id = :idComentarioReferenciado");
             $stmtParent->execute([':idComentarioReferenciado' => $comentario->idComentarioReferenciado]);
             $parent = $stmtParent->fetch(\PDO::FETCH_ASSOC);
             if ($parent) {
@@ -104,21 +107,21 @@ class Comentario extends Entidade
             ':indicePilha' => $comentario->indicePilha,
         ]);
 
-        $comentario->idComentario = $pdo->lastInsertId();
+        $comentario->id = $pdo->lastInsertId();
 
-        return json_encode(['message' => 'Comentário criado com sucesso!', 'idComentario' => $comentario->idComentario]);
+        return json_encode(['message' => 'Comentário criado com sucesso!', '$id' => $comentario->id]);
     }
 
-    public static function atualizar_curtidas(int $idComentario, bool $removerCurtida): void {
+    public static function atualizar_curtidas(int $id, bool $removerCurtida): void {
         $pdo = Database::getConnection();
         $sql = "";
         if ($removerCurtida) {
-            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas - 1 WHERE id = :idComentario";
+            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas - 1 WHERE id = :id";
         } else {
-            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas + 1 WHERE id = :idComentario";
+            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas + 1 WHERE id = :id";
         }
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([':idComentario' => $idComentario]);
+        $stmt->execute([':id' => $id]);
     }
 
 }
