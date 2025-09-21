@@ -58,12 +58,16 @@ class Campanha extends Entidade
         }
 
         if ($idUsuario == null && !$administrador) {
-           $where[] = "C.status = 1";
+           $where[] = "C.status = ".StatusCampanha::ATIVA->value;
+        }
+
+        if ($administrador && $filtroAdministrador == null) {
+            $where[] = "C.status not in (".StatusCampanha::ENCERRADA->value.",".StatusCampanha::DESATIVADA->value.")";
         }
 
         if ($filtroAdministrador != null) {
            $where[] = "C.status = :filtroAdministrador";
-            $params[':filtroAdministrador'] = $filtroAdministrador;
+           $params[':filtroAdministrador'] = $filtroAdministrador;
         }
 
         if (!empty($where)) {

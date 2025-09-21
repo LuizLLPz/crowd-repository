@@ -61,7 +61,7 @@ class NovidadeService
             $curtida->idAlvo = $idNovidade;
             $curtida->idUsuario = $idUsuario;
             $curtida->tipoAlvo = TipoAlvo::NOVIDADE->value;
-            $removerCurtida = Curtida::salvar_curtida($curtida);
+            Curtida::salvar_curtida($curtida);
             $pdo->commit();
 
         } catch (\Exception $e) {
@@ -69,5 +69,27 @@ class NovidadeService
             throw $e;
         }
     }
+
+    public static function deletar_novidade(int $idNovidade, int $idUsuario): void
+    {
+        $pdo = Database::getConnection();
+        $pdo->beginTransaction();
+        try {
+            $novidade = Novidade::obter($idNovidade, $idUsuario);
+            if (!$novidade) {
+                throw new \Exception("Novidade não encontrada.");
+            }
+            if ($novidade['idUsuario'] !== $idUsuario) {
+                throw new \Exception("Você não tem permissão para deletar esta novidade.");
+            }
+
+            Novidade::deletar($idNovidade, $idUsuario);
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
 
 }

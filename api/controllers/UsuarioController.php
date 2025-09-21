@@ -59,7 +59,7 @@ class UsuarioController extends ControllerBase {
     #[HttpPost('/verificarConta')]
     public function verificar_conta(Usuario $usuario): void
     {
-        $resultado = Usuario::buscarUsuarioPorId($usuario->idUsuario);
+        $resultado = Usuario::buscar_usuario_por_id($usuario->idUsuario);
         $agora = new \DateTime();
 
         if ($resultado->codigoVerificacao !== $usuario->codigoVerificacao) {
@@ -72,7 +72,7 @@ class UsuarioController extends ControllerBase {
             Http::HttpResponse(400, "Código expirado");
         }
 
-        Usuario::verificarUsuario($usuario->idUsuario);
+        Usuario::verificar_usuario($usuario->idUsuario);
 
         $emailService = new EmailService();
         $emailService->enviar($resultado->email, $resultado->nomeUsuario, "Verificar conta crowd repository",
@@ -84,8 +84,8 @@ class UsuarioController extends ControllerBase {
     #[HttpPost('/reenviarCodigo')]
     public function reenviar_codigo(Usuario $usuario): void
     {
-        $result = Usuario::buscarUsuarioPorId($usuario->idUsuario);
-        Usuario::gerarNovoCodigo($result);
+        $result = Usuario::buscar_usuario_por_id($usuario->idUsuario);
+        Usuario::gerar_novo_codigo($result);
 
         $emailService = new EmailService();
         $emailService->enviar(

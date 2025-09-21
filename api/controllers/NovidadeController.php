@@ -43,4 +43,13 @@ class NovidadeController extends ControllerBase
         NovidadeService::curtir_novidade($novidade->id, ControllerBase::$usuarioAutenticado->idUsuario);
         echo json_encode(['message' => "Comentario curtido com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
+
+    #[HttpDelete('/novidade')]
+    public function deletar(): void
+    {
+        $id = $_GET['idNovidade'];
+        NovidadeService::deletar_novidade($id, ControllerBase::$usuarioAutenticado->idUsuario);
+        echo json_encode(['message' => "Novidade deletada com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
 }

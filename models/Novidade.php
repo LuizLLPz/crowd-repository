@@ -80,6 +80,7 @@ class Novidade extends Entidade
             ':idUsuario' => $idUsuario,
             ':titulo' => $novidade->titulo,
             ':descricao' => $novidade->descricao,
+            ':status' => 'Ativa',
         ]);
         $novidade->id = $pdo->lastInsertId();
 
@@ -100,6 +101,15 @@ class Novidade extends Entidade
             }
         }
         return $novidade;
+    }
+
+    public static function deletar(int $idNovidade, int $idUsuario): void
+    {
+        $nomeUsuario = Usuario::obter_nomeUsuario($idUsuario);
+
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Novidade SET status = 'Cancelada', dataModificacao = now(), historico = 'Novidade cancelada pelo usuário :nomeUsuario'  WHERE id = :idNovidade");
+        $stmt->execute([':idNovidade' => $idNovidade, ':nomeUsuario' => $nomeUsuario]);
     }
 
 }
