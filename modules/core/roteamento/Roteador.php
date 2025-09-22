@@ -146,7 +146,7 @@ class Roteador
                                         if (!$propriedade->isReadOnly()) {
                                             $tipoPropriedade = $propriedade->getType();
                                             if ($tipoPropriedade && $tipoPropriedade->getName() === DateTime::class) {
-                                                $obj->$chave = new DateTime($valor);
+                                                if ($valor != null) $obj->$chave = new DateTime($valor);
                                             } else {
                                                 $obj->$chave = $valor;
                                             }
