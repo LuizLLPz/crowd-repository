@@ -24,7 +24,7 @@ class NovidadeService
             $notificacoesParaSocket = [];
 
             if (!empty($inscricoes)) {
-                $tituloCampanha = Campanha::obterTitulo($novidadeCriada->idCampanha);
+                $tituloCampanha = Campanha::obter_Titulo($novidadeCriada->idCampanha);
 
                 foreach ($inscricoes as $inscricao) {
                     $novaNotificacao = new Notificacao();

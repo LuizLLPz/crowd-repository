@@ -3,6 +3,7 @@ namespace modules\core\roteamento;
 
 use DateTime;
 use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\Http\atributos\HttpDelete;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\tipos\Http\atributos\HttpPut;
@@ -64,6 +65,10 @@ class Roteador
                 $instanciaAtributo = $atributo->newInstance();
                 $this->rotas['PUT'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
             }
+            foreach ($metodo->getAttributes(HttpDelete::class) as $atributo) {
+                $instanciaAtributo = $atributo->newInstance();
+                $this->rotas['DELETE'][$instanciaAtributo->path] = [$classeControlador, $metodo->getName()];
+            }
         }
     }
 
@@ -80,6 +85,8 @@ class Roteador
                 $atributoClasse = HttpPost::class;
             } elseif ($metodoHttp === 'PUT') {
                 $atributoClasse = HttpPut::class;
+            } elseif ($metodoHttp === 'DELETE') {
+                $atributoClasse = HttpDelete::class;
             } else {
                 $atributoClasse = null;
             }

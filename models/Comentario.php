@@ -112,16 +112,12 @@ class Comentario extends Entidade
         return json_encode(['message' => 'Comentário criado com sucesso!', '$id' => $comentario->id]);
     }
 
-    public static function atualizar_curtidas(int $id, bool $removerCurtida): void {
+    public static function obter_idUsuario(int $idComentario) {
         $pdo = Database::getConnection();
-        $sql = "";
-        if ($removerCurtida) {
-            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas - 1 WHERE id = :id";
-        } else {
-            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas + 1 WHERE id = :id";
-        }
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':id' => $id]);
+        $stmt = $pdo->prepare("SELECT idUsuario FROM Comentario WHERE id = :idComentario");
+        $stmt->execute([':idComentario' => $idComentario]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['idUsuario'] : null;
     }
 
 }

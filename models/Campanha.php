@@ -112,9 +112,7 @@ class Campanha extends Entidade
             $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
         }
 
-
         return $campanha;
-
     }
 
     public static function criar_campanha(Campanha $campanha)
@@ -220,13 +218,21 @@ class Campanha extends Entidade
         ]);
     }
 
-    public static function obterTitulo(int $idCampanha): string {
+    public static function obter_Titulo(int $idCampanha): string {
         $pdo = Database::getConnection();
         $sql = "SELECT titulo FROM Campanha WHERE idCampanha = :idCampanha";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idCampanha' => $idCampanha]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ? $result['titulo'] : '';
+    }
+
+    public static function obter_idUsuario(int $idCampanha) {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("SELECT idUsuario FROM Campanha WHERE idCampanha = :idCampanha");
+        $stmt->execute([':idCampanha' => $idCampanha]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['idUsuario'] : null;
     }
 
 }

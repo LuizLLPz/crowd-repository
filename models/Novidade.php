@@ -53,7 +53,7 @@ class Novidade extends Entidade
         $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor, 
                                      (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios
                                      FROM Novidade N JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo
-                                     WHERE N.idCampanha = :idCampanha ORDER BY N.dataCriacao DESC");
+                                     WHERE N.idCampanha = :idCampanha AND N.status = 'Ativa' ORDER BY N.dataCriacao DESC");
         $stmt->execute([':idCampanha' => $idCampanha]);
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -108,8 +108,17 @@ class Novidade extends Entidade
         $nomeUsuario = Usuario::obter_nomeUsuario($idUsuario);
 
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("UPDATE Novidade SET status = 'Cancelada', dataModificacao = now(), historico = 'Novidade cancelada pelo usuário :nomeUsuario'  WHERE id = :idNovidade");
+        $stmt = $pdo->prepare("UPDATE Novidade SET status = 'Cancelada', dataModificacao = now(), historico = CONCAT('Novidade cancelada pelo usuário ', :nomeUsuario)  WHERE id = :idNovidade");
         $stmt->execute([':idNovidade' => $idNovidade, ':nomeUsuario' => $nomeUsuario]);
     }
+
+    public static function obter_idUsuario(int $idNovidade) {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("SELECT idUsuario FROM Novidade WHERE id = :idNovidade");
+        $stmt->execute([':idNovidade' => $idNovidade]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['idUsuario'] : null;
+    }
+
 
 }

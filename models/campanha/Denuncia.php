@@ -76,7 +76,7 @@ class Denuncia extends Entidade
     public static function denunciarObjeto(Denuncia $denuncia): string {
         $pdo = Database::getConnection();
 
-        $sql = "INSERT INTO Denuncia (idAlvo, idUsuario, motivoDenuncia, comentario, tipoAlvo, status, dataCriacao) VALUES (:idDenuncia, :idUsuario, :motivoDenuncia, :comentario, :tipoAlvo, 'Ativo', NOW())";
+        $sql = "INSERT INTO Denuncia (idAlvo, idUsuario, motivoDenuncia, comentario, tipoAlvo, status, dataCriacao) VALUES (:idDenuncia, :idUsuario, :motivoDenuncia, :comentario, :tipoAlvo, 'Ativa', NOW())";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
