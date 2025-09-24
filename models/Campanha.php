@@ -31,13 +31,18 @@ class Campanha extends Entidade
     public string $instagram = '';
     public bool $denunciadoUsuario;
     public bool $inscritoUsuario;
+    public string $nomeAutor;
+    public string $caminhoFotoAutor;
     public int $qtdDenuncias;
     public static function buscar_campanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null, ?int $filtroAdministrador = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT C.*, C.titulo AS categoria, (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
+        $sql = "SELECT C.*, C.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoFotoAutor,
+            (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias 
             FROM Campanha C 
-            LEFT JOIN Categoria CA ON CA.id = C.idCategoria ";
+            LEFT JOIN Categoria CA ON CA.id = C.idCategoria 
+            LEFT JOIN Usuario U ON U.idUsuario = C.idUsuario
+            ";
 
         $where = [];
         $params = [];

@@ -30,6 +30,7 @@ class CampanhaController extends ControllerBase
     {
         $pesquisa = $_GET['pesquisa'] ?? null;
         $categoriaRaw = $_GET['idCategoria'] ?? null;
+        $idUsuario = $_GET['idUsuario'] ?? null;
         $categoria = ($categoriaRaw === '' ? null : (int) $categoriaRaw);
         $campanhasUsuario = $_GET['campanhasUsuario'] ?? null;
         $filtroAdministrador = $_GET['filtroAdministrador'] ?? null;
@@ -41,7 +42,7 @@ class CampanhaController extends ControllerBase
         }
 
         $campanhasUsuarioBool = filter_var($campanhasUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        $idUsuario = $campanhasUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
+        if ($idUsuario == null && $campanhasUsuarioBool) $idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
 
         $resp = Campanha::buscar_campanhas($administrador, $pesquisa, $categoria, $idUsuario, $filtroAdministrador);
         Http::HttpResponse(200, "Campanhas encontradas", $resp);
