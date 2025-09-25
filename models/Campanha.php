@@ -88,12 +88,6 @@ class Campanha extends Entidade
 
         $campanhas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        foreach ($campanhas as &$campanha) {
-            if (!empty($campanha['caminhoImagem'])) {
-                $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . ltrim($campanha['caminhoImagem'], '/');
-            }
-        }
-
         return $campanhas;
     }
 
@@ -106,10 +100,6 @@ class Campanha extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":idCampanha" => $idCampanha]);
         $campanha = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        if (!empty($campanha['caminhoImagem'])) {
-            $campanha['caminhoImagem'] = Utils::getServerUrl() . '/' . $campanha['caminhoImagem'];
-        }
 
         if ($idUsuario != null) {
             $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuario($idUsuario, $idCampanha, TipoAlvo::CAMPANHA);

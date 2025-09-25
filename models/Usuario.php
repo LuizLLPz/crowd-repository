@@ -57,10 +57,6 @@ class Usuario extends Entidade
             $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }
 
-        if ($usuario->caminhoImagem != null) {
-            $usuario->caminhoImagem = Utils::getServerUrl() . '/' . $usuario->caminhoImagem;
-        }
-
         return $usuario;
     }
 

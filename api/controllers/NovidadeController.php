@@ -32,7 +32,8 @@ class NovidadeController extends ControllerBase
     #[HttpPost('/novidade')]
     public function salvar(Novidade $novidade): void
     {
-        $url = NovidadeService::criar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
+        $imagemFile = isset($_FILES['imagem']) ? $_FILES['imagem'] : null;
+        $url = NovidadeService::criar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario, $imagemFile);
         $link = new Link(LinkRel::SELF, $url, "Novidade criada");
         $links = array($link);
         echo json_encode(['message' => "Novidade criada com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);

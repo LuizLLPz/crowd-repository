@@ -12,13 +12,13 @@ use modules\db\Database;
 
 class NovidadeService
 {
-    public static function criar_novidade(Novidade $novidade, int $idUsuario): string
+    public static function criar_novidade(Novidade $novidade, int $idUsuario, ?array $imagemFile = null): string
     {
         $pdo = Database::getConnection();
         $pdo->beginTransaction();
 
         try {
-            $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario);
+            $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario, $imagemFile);
             $inscricoes = InscricaoCampanha::obterInscricoesCampanha($novidadeCriada->idCampanha);
 
             $notificacoesParaSocket = [];
