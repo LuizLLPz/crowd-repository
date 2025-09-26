@@ -7,6 +7,7 @@ use modules\core\tipos\Entidade;
 use modules\core\utils\File;
 use modules\core\utils\Utils;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 use function modules\core\utils\getServerUrl;
 
 class Novidade extends Entidade
@@ -33,7 +34,16 @@ class Novidade extends Entidade
         $stmt->execute([':idNovidade' => $idNovidade]);
         $novidade = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        $novidade['curtidaUsuario'] = Curtida::buscar_curtido_usuario($idUsuario, $novidade['id'], TipoAlvo::NOVIDADE->value);
+        if ($novidade) {
+            if (!empty($novidade['imagem'])) {
+                $novidade['imagem'] = GoogleCloudStorageService::getSignedUrl($novidade['imagem']);
+            }
+            if (!empty($novidade['caminhoFotoAutor'])) {
+                $novidade['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($novidade['caminhoFotoAutor']);
+            }
+            $novidade['curtidaUsuario'] = Curtida::buscar_curtido_usuario($idUsuario, $novidade['id'], TipoAlvo::NOVIDADE->value);
+        }
+
         return $novidade;
     }
 
@@ -45,6 +55,12 @@ class Novidade extends Entidade
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($novidades as &$novidade) {
+            if (!empty($novidade['imagem'])) {
+                $novidade['imagem'] = GoogleCloudStorageService::getSignedUrl($novidade['imagem']);
+            }
+            if (!empty($novidade['caminhoFotoAutor'])) {
+                $novidade['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($novidade['caminhoFotoAutor']);
+            }
             $novidade['curtidaUsuario'] = Curtida::buscar_curtido_usuario($idUsuario, $novidade['id'], TipoAlvo::NOVIDADE->value);
         }
         return $novidades;
@@ -69,7 +85,7 @@ class Novidade extends Entidade
             $nomeArquivo = "campanha-{$novidade->idCampanha}-novidade-{$novidade->id}";
             $resultadoUpload = File::salvarImagem($imagemFile, $nomeArquivo);
             if ($resultadoUpload['success']) {
-                $novidade->imagem = $resultadoUpload['relativePath'];
+                $novidade->imagem = $resultadoUpload['filePath'];
 
                 $stmtImg = $pdo->prepare("UPDATE Novidade SET imagem = :imagem WHERE id = :id");
                 $stmtImg->execute([

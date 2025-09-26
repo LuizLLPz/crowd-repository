@@ -22,7 +22,7 @@ class CampanhaController extends ControllerBase
     {
         $idCampanha = $_GET["idCampanha"];
         $resp = Campanha::obter_campanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
-        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
     #[HttpGet('/campanhas')]

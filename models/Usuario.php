@@ -7,6 +7,7 @@ use modules\core\tipos\Entidade;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Utils;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 
 class Usuario extends Entidade
 {
@@ -46,12 +47,14 @@ class Usuario extends Entidade
     public static function buscar_usuario(int $idUsuario): Usuario
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->query(new Usuario()->select);
-
         $stmt = $pdo->prepare("SELECT U.*, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
+
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
+        }
 
         if ($usuario && is_string($usuario->funcao)) {
             $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
@@ -72,7 +75,15 @@ class Usuario extends Entidade
     {
         $pdo = Database::getConnection();
         $stmt = $pdo->query(new Usuario()->select);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($usuarios as &$usuario) {
+            if (!empty($usuario['caminhoImagem'])) {
+                $usuario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($usuario['caminhoImagem']);
+            }
+        }
+
+        return $usuarios;
     }
 
     public static function criar_usuario(Usuario $usuario): string
@@ -146,6 +157,10 @@ class Usuario extends Entidade
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
 
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
+        }
+
         if ($usuario && is_string($usuario->funcao)) {
             $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }
@@ -160,6 +175,9 @@ class Usuario extends Entidade
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
+        }
         if ($usuario && is_string($usuario->funcao)) {
             $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }

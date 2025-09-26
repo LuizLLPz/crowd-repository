@@ -64,10 +64,9 @@ class File
 
         $baseName = $fileName ? pathinfo($fileName, PATHINFO_FILENAME) : uniqid('', true);
         $sanitizedBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $baseName);
-        $newFileName = $sanitizedBaseName . '.webp'; // Always save as webp
+        $newFileName = $sanitizedBaseName . '.webp';
         $filePath = rtrim($destinationDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $newFileName;
 
-        // Create image resource from uploaded file
         $image = null;
         switch ($detectedMimeType) {
             case 'image/jpeg':
@@ -88,8 +87,7 @@ class File
             return ['success' => false, 'message' => 'Falha ao criar recurso de imagem a partir do arquivo.'];
         }
 
-        // Convert and save the image as WebP to a temporary local file
-        $saveSuccess = imagewebp($image, $filePath, 80); // 80 is the quality (0-100)
+        $saveSuccess = imagewebp($image, $filePath, 80);
         imagedestroy($image);
 
         if (!$saveSuccess) {
@@ -99,21 +97,17 @@ class File
             return ['success' => false, 'message' => 'Falha ao salvar a imagem convertida localmente.'];
         }
 
-        // Upload to Google Cloud Storage
         try {
-            $gcsUrl = GoogleCloudStorageService::uploadFile($filePath, $newFileName);
+            $objectName = GoogleCloudStorageService::uploadFile($filePath, $newFileName);
 
-            // Clean up local file
             unlink($filePath);
 
             return [
                 'success' => true,
-                'filePath' => $gcsUrl, // GCS URI e.g., gs://bucket/object
-                'relativePath' => $gcsUrl, // Returning the full GCS URI
+                'filePath' => $objectName,
                 'message' => 'Arquivo salvo com sucesso no Google Cloud Storage.'
             ];
         } catch (\Exception $e) {
-            // Clean up local file in case of upload failure
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
@@ -123,7 +117,6 @@ class File
 
     public static function delete(string $filePath): bool
     {
-        // This might need to be updated to handle GCS URLs if you store them in the DB
         if (file_exists($filePath) && is_file($filePath)) {
             return unlink($filePath);
         }

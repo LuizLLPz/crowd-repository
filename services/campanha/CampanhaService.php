@@ -22,7 +22,7 @@ class CampanhaService
                 $nomeArquivo = "campanha-{$campanha->idCampanha}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);
                 $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
                 if ($resultadoUpload['success']) {
-                    $campanha->caminhoImagem = $resultadoUpload['relativePath'];
+                    $campanha->caminhoImagem = $resultadoUpload['filePath'];
                     Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
                 } else {
                     throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
@@ -40,7 +40,7 @@ class CampanhaService
 
             $pdo->commit();
 
-            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
+            return $campanha->caminhoImagem ?? "";
 
         } catch (\Exception $e) {
             $pdo->rollBack();
@@ -62,7 +62,7 @@ class CampanhaService
                 $nomeArquivo = "campanha-{$campanha->idCampanha}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);
                 $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
                 if ($resultadoUpload['success']) {
-                    $campanha->caminhoImagem = $resultadoUpload['relativePath'];
+                    $campanha->caminhoImagem = $resultadoUpload['filePath'];
                     Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
                 } else {
                     throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
@@ -73,7 +73,7 @@ class CampanhaService
                 Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
             }
             $pdo->commit();
-            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
+            return $campanha->caminhoImagem ?? "";
 
         } catch (\Exception $e) {
             $pdo->rollBack();

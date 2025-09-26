@@ -45,7 +45,7 @@ class NovidadeService
                 SocketService::notificar($notificacoesParaSocket);
             }
 
-            return "{$_ENV["CORS_ORIGIN"]}/novidade/{$novidade->id}/";
+            return $novidadeCriada->imagem ?? "";
 
         } catch (\Exception $e) {
             $pdo->rollBack();

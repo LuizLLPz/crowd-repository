@@ -10,6 +10,7 @@ use models\campanha\InscricaoCampanha;
 use modules\core\tipos\Entidade;
 use modules\core\utils\Utils;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 
 class Campanha extends Entidade
 {
@@ -88,6 +89,15 @@ class Campanha extends Entidade
 
         $campanhas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        foreach ($campanhas as &$campanha) {
+            if (!empty($campanha['caminhoImagem'])) {
+                $campanha['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoImagem']);
+            }
+            if (!empty($campanha['caminhoFotoAutor'])) {
+                $campanha['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoFotoAutor']);
+            }
+        }
+
         return $campanhas;
     }
 
@@ -101,10 +111,16 @@ class Campanha extends Entidade
         $stmt->execute([":idCampanha" => $idCampanha]);
         $campanha = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-        if ($idUsuario != null) {
-            $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuario($idUsuario, $idCampanha, TipoAlvo::CAMPANHA);
-            $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
-            $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
+        if ($campanha) {
+            if (!empty($campanha['caminhoImagem'])) {
+                $campanha['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoImagem']);
+            }
+
+            if ($idUsuario != null) {
+                $campanha['denunciadoUsuario'] = Denuncia::buscarDenunciaUsuario($idUsuario, $idCampanha, TipoAlvo::CAMPANHA);
+                $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
+                $campanha['inscritoUsuario'] = $inscricao && $inscricao['status'] === 'ativa';
+            }
         }
 
         return $campanha;
