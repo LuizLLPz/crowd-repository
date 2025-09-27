@@ -2,9 +2,7 @@
 
 namespace modules\core\validacoes;
 
-use modules\core\tipos\core\controllers\ControllerBase;
-use modules\db\Database;
-use PDO;
+use models\core\Excecao;
 use Throwable;
 
 class ErrorHandler
@@ -45,40 +43,7 @@ class ErrorHandler
 
     private static function salvarExcecao(Throwable $e): void
     {
-        try {
-            $pdo = Database::getConnection();
-            $sql = "INSERT INTO Excecoes (mensagem, arquivo, linha, stack_trace, contexto, id_usuario_logado, rota_requisitada, metodo_http) 
-                    VALUES (:mensagem, :arquivo, :linha, :stack_trace, :contexto, :id_usuario, :rota, :metodo)";
-
-            $contexto = json_encode([
-                'GET' => $_GET,
-                'POST' => $_POST,
-                'SERVER' => $_SERVER,
-                'BODY' => file_get_contents('php://input')
-            ]);
-
-            $idUsuario = null;
-            $resultado = Token::validarToken();
-            if ($resultado) {
-                $idUsuario = $resultado->idUsuario;
-            }
-            $rota = $_SERVER['REQUEST_URI'] ?? null;
-            $metodo = $_SERVER['REQUEST_METHOD'] ?? null;
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':mensagem', $e->getMessage());
-            $stmt->bindValue(':arquivo', $e->getFile());
-            $stmt->bindValue(':linha', $e->getLine(), PDO::PARAM_INT);
-            $stmt->bindValue(':stack_trace', $e->getTraceAsString());
-            $stmt->bindValue(':contexto', $contexto);
-            $stmt->bindValue(':id_usuario', $idUsuario);
-            $stmt->bindValue(':rota', $rota);
-            $stmt->bindValue(':metodo', $metodo);
-            $stmt->execute();
-
-        } catch (Throwable $dbError) {
-            error_log("Falha ao salvar exceção no banco: " . $dbError->getMessage());
-        }
+        Excecao::salvar($e);
     }
 
     private static function getMensagemErro(Throwable $e): array

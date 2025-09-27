@@ -2,7 +2,7 @@
 
 namespace api\controllers;
 
-use models\Novidade;
+use models\campanha\Novidade;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpDelete;
 use modules\core\tipos\Http\atributos\HttpGet;
@@ -39,7 +39,15 @@ class NovidadeController extends ControllerBase
         echo json_encode(['message' => "Novidade criada com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
-    #[HttpPost('/novidade/curtir')]
+    #[HttpPost('/novidade/editar')]
+    public function editar(Novidade $novidade): void
+    {
+        $imagemFile = isset($_FILES['imagem']) ? $_FILES['imagem'] : null;
+        NovidadeService::editar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario, $imagemFile);
+        echo json_encode(['message' => "Novidade atualizada com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
+
     public function curtir(Novidade $novidade): void
     {
         NovidadeService::curtir_novidade($novidade->id, ControllerBase::$usuarioAutenticado->idUsuario);

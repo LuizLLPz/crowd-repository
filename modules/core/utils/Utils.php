@@ -85,9 +85,9 @@ class Utils
             } else {
                 if (str_ends_with($fieldName, '[]')) {
                     $fieldName = rtrim($fieldName, '[]');
-                    $result['post'][$fieldName][] = $body;
+                    $result['post'][$fieldName][] = trim($body);
                 } else {
-                    $result['post'][$fieldName] = $body;
+                    $result['post'][$fieldName] = trim($body);
                 }
             }
         }

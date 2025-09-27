@@ -1,8 +1,7 @@
 <?php
 
-namespace models;
+namespace models\social;
 
-use DateTime;
 use modules\core\tipos\Entidade;
 use modules\db\Database;
 

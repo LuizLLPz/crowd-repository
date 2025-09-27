@@ -2,13 +2,10 @@
 
 namespace api\controllers;
 
-use Firebase\JWT\JWT;
-use models\Mensagens;
+use models\social\Mensagens;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
-use modules\core\tipos\http\tipos\Link;
-use modules\core\tipos\LinkRel;
 
 class MensagensController extends ControllerBase
 {

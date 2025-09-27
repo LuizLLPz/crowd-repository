@@ -1,11 +1,12 @@
 <?php
 
-namespace models;
+namespace models\campanha;
 
 use models\campanha\enums\TipoAlvo;
+use models\social\Curtida;
+use models\social\Usuario;
 use modules\core\tipos\Entidade;
 use modules\core\utils\File;
-use modules\core\utils\Utils;
 use modules\db\Database;
 use services\integrations\google\GoogleCloudStorageService;
 use function modules\core\utils\getServerUrl;
@@ -93,11 +94,23 @@ class Novidade extends Entidade
                     ':id' => $novidade->id
                 ]);
             } else {
-                // Optionally, you might want to roll back the transaction or handle the error
                 throw new \Exception("Falha no upload da imagem: " . $resultadoUpload['message']);
             }
         }
         return $novidade;
+    }
+
+    public static function editar_novidade(Novidade $novidade): void
+    {
+        $pdo = Database::getConnection();
+        $sql = "UPDATE Novidade SET titulo = :titulo, descricao = :descricao, dataModificacao = now() WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->execute([
+            ':titulo' => $novidade->titulo,
+            ':descricao' => $novidade->descricao,
+            ':id' => $novidade->id,
+        ]);
     }
 
     public static function deletar(int $idNovidade, int $idUsuario): void

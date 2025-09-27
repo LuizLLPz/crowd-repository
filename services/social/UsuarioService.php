@@ -1,9 +1,9 @@
 <?php
 
-namespace services\usuario;
+namespace services\social;
 
 use Firebase\JWT\JWT;
-use models\Usuario;
+use models\social\Usuario;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\integrations\email\EmailService;

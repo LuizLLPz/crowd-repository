@@ -2,7 +2,7 @@
 
 namespace api\controllers;
 
-use models\campanha\Denuncia;
+use models\core\Denuncia;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;

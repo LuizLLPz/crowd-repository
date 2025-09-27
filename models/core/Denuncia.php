@@ -1,6 +1,6 @@
 <?php
 
-namespace models\campanha;
+namespace models\core;
 
 use models\campanha\enums\MotivoDenuncia;
 use models\campanha\enums\TipoAlvo;

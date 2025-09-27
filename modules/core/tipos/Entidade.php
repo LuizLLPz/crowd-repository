@@ -7,7 +7,6 @@ abstract class Entidade
 {
     public string $select {
         get {
-            // Monta a consulta SQL
             return "SELECT * FROM {$this->nomeTabela} ";
         }
     }

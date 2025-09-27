@@ -1,5 +1,5 @@
 <?php
-namespace models;
+namespace models\social;
 
 use modules\core\tipos\Entidade;
 use modules\db\Database;

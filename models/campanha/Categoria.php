@@ -1,6 +1,6 @@
 <?php
 
-namespace models;
+namespace models\campanha;
 
 use modules\core\tipos\Entidade;
 use modules\db\Database;

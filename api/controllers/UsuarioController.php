@@ -2,8 +2,7 @@
 
 namespace api\controllers;
 
-use Firebase\JWT\JWT;
-use models\Usuario;
+use models\social\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
@@ -11,7 +10,7 @@ use modules\core\tipos\Http\atributos\HttpPut;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;
 use services\integrations\email\EmailService;
-use services\usuario\UsuarioService;
+use services\social\UsuarioService;
 
 class UsuarioController extends ControllerBase {
 

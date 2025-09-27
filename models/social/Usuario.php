@@ -1,11 +1,10 @@
 <?php
 
-namespace models;
+namespace models\social;
 
 use DateTime;
 use modules\core\tipos\Entidade;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
-use modules\core\utils\Utils;
 use modules\db\Database;
 use services\integrations\google\GoogleCloudStorageService;
 
@@ -21,6 +20,7 @@ class Usuario extends Entidade
     public bool $verificado;
     public ?FuncaoUsuario $funcao = null;
     public ?string $caminhoImagem = '';
+    public ?string $stripe_account_id = null;
     public ?string $telefone = '';
     public ?string $linkedin = '';
     public ?string $github = '';
@@ -215,5 +215,16 @@ class Usuario extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idUsuario' => $idUsuario]);
         return true;
+    }
+
+
+    public static function atualizarStripeAccountId(int $idUsuario, string $stripeAccountId): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Usuario SET stripe_account_id = :stripe_account_id WHERE idUsuario = :idUsuario");
+        $stmt->execute([
+            ':stripe_account_id' => $stripeAccountId,
+            ':idUsuario' => $idUsuario
+        ]);
     }
 }

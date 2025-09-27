@@ -117,9 +117,10 @@ class File
 
     public static function delete(string $filePath): bool
     {
-        if (file_exists($filePath) && is_file($filePath)) {
-            return unlink($filePath);
+        if (empty($filePath)) {
+            return false;
         }
-        return false;
+        GoogleCloudStorageService::deleteFile($filePath);
+        return true;
     }
 }

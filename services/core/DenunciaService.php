@@ -1,11 +1,11 @@
 <?php
 namespace services\core;
 
-use models\Campanha;
-use models\campanha\Denuncia;
-use models\Comentario;
-use models\Notificacao;
-use models\Novidade;
+use models\campanha\Campanha;
+use models\campanha\Novidade;
+use models\core\Denuncia;
+use models\core\Notificacao;
+use models\social\Comentario;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\campanha\CampanhaService;

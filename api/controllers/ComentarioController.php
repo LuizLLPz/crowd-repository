@@ -2,11 +2,11 @@
 
 namespace api\controllers;
 
-use models\Comentario;
+use models\social\Comentario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
-use services\campanha\ComentarioService;
+use services\social\ComentarioService;
 
 class ComentarioController extends ControllerBase
 {
