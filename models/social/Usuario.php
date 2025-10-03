@@ -21,6 +21,10 @@ class Usuario extends Entidade
     public ?FuncaoUsuario $funcao = null;
     public ?string $caminhoImagem = '';
     public ?string $stripe_account_id = null;
+    public ?string $stripe_details_submitted = null;
+    public ?string $stripe_charges_enabled = null;
+    public ?string $stripe_payouts_enabled = null;
+    public ?string $stripe_requirements_due = null;
     public ?string $telefone = '';
     public ?string $linkedin = '';
     public ?string $github = '';
