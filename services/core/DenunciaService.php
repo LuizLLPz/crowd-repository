@@ -1,9 +1,11 @@
 <?php
 namespace services\core;
 
-use models\Campanha;
-use models\campanha\Denuncia;
-use models\Notificacao;
+use models\campanha\Campanha;
+use models\campanha\Novidade;
+use models\core\Denuncia;
+use models\core\Notificacao;
+use models\social\Comentario;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\campanha\CampanhaService;
@@ -56,13 +58,22 @@ class DenunciaService
 
             $notificacaoDono = new Notificacao();
             $idDonoAlvo = 0;
-            if ($denuncia->tipoAlvo == 'Campanha') {
-                $campanha = Campanha::obter_campanha($denuncia->idAlvo);
-                $idDonoAlvo = $campanha['idUsuario'];
+
+            switch ($denuncia->tipoAlvo) {
+                case 'Novidade':
+                    $idDonoAlvo =  Novidade::obter_idUsuario($denuncia->idAlvo);
+                    break;
+                case 'Comentario':
+                    $idDonoAlvo = Comentario::obter_idUsuario($denuncia->idAlvo);
+                    break;
+                case 'Campanha':
+                    $idDonoAlvo = Campanha::obter_idUsuario($denuncia->idAlvo);
+                    break;
             }
+
             if ($denuncia->status == "Aprovada") {
                 $notificacaoDono->idUsuario = $idDonoAlvo;
-                $notificacaoDono->titulo =$denuncia->tipoAlvo . "que você cadastrou foi removido/a pela moderação";
+                $notificacaoDono->titulo =$denuncia->tipoAlvo . " que você cadastrou foi removido/a pela moderação";
                 $notificacaoDono->descricao = "Um item seu não está de acordo com os nossos termos e foi excluído. Para mais informações entre em contato conosco!";
                 $notificacaoDono->tipo = "item_excluido";
                 $notificacaoDono->idItem = $denuncia->idAlvo;

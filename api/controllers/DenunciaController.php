@@ -2,7 +2,7 @@
 
 namespace api\controllers;
 
-use models\campanha\Denuncia;
+use models\core\Denuncia;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
@@ -17,7 +17,7 @@ class DenunciaController extends ControllerBase
     {
         $idAlvo = $_GET['idAlvo'] ?? null;
         $tipoAlvo = $_GET['tipoAlvo'] ?? null;
-        $resp = Denuncia::buscarDenuncias($idAlvo, $tipoAlvo);
+        $resp = Denuncia::buscar_denuncias($idAlvo, $tipoAlvo);
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
@@ -25,6 +25,10 @@ class DenunciaController extends ControllerBase
     public function salvar(Denuncia $denuncia): void
     {
         $denuncia->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $objeto = Denuncia::buscar_denuncia_objeto_usuario($denuncia);
+        if ($objeto != null) {
+            Http::HttpResponse(409, "Você já denunciou este item!");
+        }
         $res = DenunciaService::denunciar($denuncia);
         Http::HttpResponse(200, $res);
     }

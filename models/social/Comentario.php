@@ -1,10 +1,11 @@
 <?php
 
-namespace models;
+namespace models\social;
 
 use modules\core\tipos\Entidade;
 use modules\core\utils\Utils;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 
 class Comentario extends Entidade
 {
@@ -42,21 +43,19 @@ class Comentario extends Entidade
                 u.nomeUsuario AS nomeAutor,
                 u.caminhoImagem AS caminhoFotoAutor,
                 ca.titulo AS descricaoCargoAutor,
-                (IF(ct.idUsuario IS NOT NULL, TRUE, FALSE)) AS curtidaUsuario
+                (SELECT COUNT(*) > 0 FROM Curtida WHERE idAlvo = c.id AND tipoAlvo = 'Comentario' AND idUsuario = :idUsuario) AS curtidaUsuario
             FROM
                 Comentario c
             JOIN
                 Usuario u ON c.idUsuario = u.idUsuario
-            JOIN
+            LEFT JOIN
                 Cargo ca ON ca.id = u.idCargo
             LEFT JOIN
                 Comentario cr ON c.id = cr.idComentarioReferenciado
-            LEFT JOIN 
-                Curtida ct ON ct.idAlvo = c.id AND ct.tipoAlvo = 'Comentario' AND ct.idUsuario = :idUsuario
             WHERE
                 c.idNovidade = :idNovidade
             GROUP BY
-                c.dataCriacao, c.id, u.idUsuario, u.nomeUsuario, u.caminhoImagem, ca.titulo, curtidaUsuario
+                c.id
             ORDER BY
                 c.dataCriacao;
         ";
@@ -67,10 +66,60 @@ class Comentario extends Entidade
 
         foreach ($comentarios as &$comentario) {
             if (!empty($comentario['caminhoImagem'])) {
-                $comentario['caminhoImagem'] = Utils::getServerUrl() . '/' . $comentario['caminhoImagem'];
+                $comentario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($comentario['caminhoImagem']);
             }
             if (!empty($comentario['caminhoFotoAutor'])) {
-                $comentario['caminhoFotoAutor'] = Utils::getServerUrl() . '/' . $comentario['caminhoFotoAutor'];
+                $comentario['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($comentario['caminhoFotoAutor']);
+            }
+        }
+        return $comentarios;
+    }
+
+    public static function buscarTreePorId(int $idComentario, int $idUsuario)
+    {
+        $pdo = Database::getConnection();
+        $sql = "
+            WITH RECURSIVE CommentThread AS (
+                SELECT 
+                    id, comentario, caminhoImagem, dataCriacao, editado, indicePilha, idComentarioReferenciado, qtdCurtidas, idNovidade, idUsuario
+                FROM Comentario WHERE id = :idComentario
+                UNION ALL
+                SELECT 
+                    c.id, c.comentario, c.caminhoImagem, c.dataCriacao, c.editado, c.indicePilha, c.idComentarioReferenciado, c.qtdCurtidas, c.idNovidade, c.idUsuario
+                FROM Comentario c
+                INNER JOIN CommentThread ct ON c.idComentarioReferenciado = ct.id
+            )
+            SELECT 
+                ct.id,
+                ct.comentario,
+                ct.caminhoImagem,
+                ct.dataCriacao,
+                ct.editado,
+                ct.indicePilha,
+                ct.idComentarioReferenciado,
+                ct.qtdCurtidas,
+                (SELECT COUNT(*) FROM Comentario WHERE idComentarioReferenciado = ct.id) AS qtdComentarios,
+                u.idUsuario AS idAutor,
+                u.nomeUsuario AS nomeAutor,
+                u.caminhoImagem AS caminhoFotoAutor,
+                ca.titulo AS descricaoCargoAutor,
+                (SELECT COUNT(*) > 0 FROM Curtida WHERE idAlvo = ct.id AND tipoAlvo = 'Comentario' AND idUsuario = :idUsuario) AS curtidaUsuario
+            FROM CommentThread ct
+            JOIN Usuario u ON ct.idUsuario = u.idUsuario
+            LEFT JOIN Cargo ca ON ca.id = u.idCargo
+            ORDER BY ct.dataCriacao;
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idComentario' => $idComentario, ':idUsuario' => $idUsuario]);
+        $comentarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($comentarios as &$comentario) {
+            if (!empty($comentario['caminhoImagem'])) {
+                $comentario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($comentario['caminhoImagem']);
+            }
+            if (!empty($comentario['caminhoFotoAutor'])) {
+                $comentario['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($comentario['caminhoFotoAutor']);
             }
         }
         return $comentarios;
@@ -88,6 +137,11 @@ class Comentario extends Entidade
             }
         }
         $comentario->indicePilha = $indicePilha;
+
+        if (!isset($comentario->comentario) || $comentario->comentario === 'undefined') {
+            $comentario->comentario = '';
+        }
+
 
 
         $sql = "
@@ -112,16 +166,12 @@ class Comentario extends Entidade
         return json_encode(['message' => 'Comentário criado com sucesso!', '$id' => $comentario->id]);
     }
 
-    public static function atualizar_curtidas(int $id, bool $removerCurtida): void {
+    public static function obter_idUsuario(int $idComentario) {
         $pdo = Database::getConnection();
-        $sql = "";
-        if ($removerCurtida) {
-            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas - 1 WHERE id = :id";
-        } else {
-            $sql = "UPDATE Novidade SET qtdCurtidas = qtdCurtidas + 1 WHERE id = :id";
-        }
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':id' => $id]);
+        $stmt = $pdo->prepare("SELECT idUsuario FROM Comentario WHERE id = :idComentario");
+        $stmt->execute([':idComentario' => $idComentario]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ? $result['idUsuario'] : null;
     }
 
 }

@@ -1,30 +1,31 @@
 <?php
 namespace services\campanha;
 
-use models\Campanha;
+use models\campanha\Campanha;
 use models\campanha\enums\TipoAlvo;
-use models\Curtida;
-use models\Novidade;
 use models\campanha\InscricaoCampanha;
-use models\Notificacao;
-use services\integrations\SocketService;
+use models\campanha\Novidade;
+use models\core\Notificacao;
+use models\social\Curtida;
+use modules\core\utils\File;
 use modules\db\Database;
+use services\integrations\SocketService;
 
 class NovidadeService
 {
-    public static function criar_novidade(Novidade $novidade, int $idUsuario): string
+    public static function criar_novidade(Novidade $novidade, int $idUsuario, ?array $imagemFile = null): string
     {
         $pdo = Database::getConnection();
         $pdo->beginTransaction();
 
         try {
-            $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario);
+            $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario, $imagemFile);
             $inscricoes = InscricaoCampanha::obterInscricoesCampanha($novidadeCriada->idCampanha);
 
             $notificacoesParaSocket = [];
 
             if (!empty($inscricoes)) {
-                $tituloCampanha = Campanha::obterTitulo($novidadeCriada->idCampanha);
+                $tituloCampanha = Campanha::obter_Titulo($novidadeCriada->idCampanha);
 
                 foreach ($inscricoes as $inscricao) {
                     $novaNotificacao = new Notificacao();
@@ -45,8 +46,48 @@ class NovidadeService
                 SocketService::notificar($notificacoesParaSocket);
             }
 
-            return "{$_ENV["CORS_ORIGIN"]}/novidade/{$novidade->id}/";
+            return $novidadeCriada->imagem ?? "";
 
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public static function editar_novidade(Novidade $novidade, int $idUsuario, ?array $imagemFile = null): void
+    {
+        $pdo = Database::getConnection();
+        $pdo->beginTransaction();
+
+        try {
+            $novidadeAntiga = Novidade::obter($novidade->id, $idUsuario);
+            if (!$novidadeAntiga) {
+                throw new \Exception("Novidade não encontrada.");
+            }
+            if ($novidadeAntiga['idAutor'] !== $idUsuario) {
+                throw new \Exception("Você não tem permissão para editar esta novidade.");
+            }
+
+            if ($imagemFile && $imagemFile['error'] === UPLOAD_ERR_OK) {
+                if (!empty($novidadeAntiga['imagem'])) {
+                    File::delete($novidadeAntiga['imagem']);
+                }
+
+                $nomeArquivo = "campanha-{$novidade->idCampanha}-novidade-{$novidade->id}";
+                $resultadoUpload = File::salvarImagem($imagemFile, $nomeArquivo);
+                if ($resultadoUpload['success']) {
+                    $stmtImg = $pdo->prepare("UPDATE Novidade SET imagem = :imagem WHERE id = :id");
+                    $stmtImg->execute([
+                        ':imagem' => $resultadoUpload['filePath'],
+                        ':id' => $novidade->id
+                    ]);
+                } else {
+                    throw new \Exception("Falha no upload da nova imagem: " . $resultadoUpload['message']);
+                }
+            }
+
+            Novidade::editar_novidade($novidade);
+            $pdo->commit();
         } catch (\Exception $e) {
             $pdo->rollBack();
             throw $e;
@@ -61,7 +102,7 @@ class NovidadeService
             $curtida->idAlvo = $idNovidade;
             $curtida->idUsuario = $idUsuario;
             $curtida->tipoAlvo = TipoAlvo::NOVIDADE->value;
-            $removerCurtida = Curtida::salvar_curtida($curtida);
+            Curtida::salvar_curtida($curtida);
             $pdo->commit();
 
         } catch (\Exception $e) {
@@ -69,5 +110,27 @@ class NovidadeService
             throw $e;
         }
     }
+
+    public static function deletar_novidade(int $idNovidade, int $idUsuario): void
+    {
+        $pdo = Database::getConnection();
+        $pdo->beginTransaction();
+        try {
+            $novidade = Novidade::obter($idNovidade, $idUsuario);
+            if (!$novidade) {
+                throw new \Exception("Novidade não encontrada.");
+            }
+            if ($novidade['idUsuario'] !== $idUsuario) {
+                throw new \Exception("Você não tem permissão para deletar esta novidade.");
+            }
+
+            Novidade::deletar($idNovidade, $idUsuario);
+            $pdo->commit();
+        } catch (\Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
 
 }

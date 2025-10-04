@@ -2,6 +2,9 @@
 
 namespace modules\core\validacoes;
 
+use models\core\Excecao;
+use Throwable;
+
 class ErrorHandler
 {
     public static function registrar(): void
@@ -11,13 +14,10 @@ class ErrorHandler
         register_shutdown_function([self::class, 'tratarErroFatal']);
     }
 
-    public static function tratarExcecao(\Throwable $e): void
+    public static function tratarExcecao(Throwable $e): void
     {
-        self::responderJson(500, [
-            'error' => $e->getMessage(),
-            'file'  => $e->getFile(),
-            'line'  => $e->getLine(),
-        ]);
+        self::salvarExcecao($e);
+        self::responderJson(500, self::getMensagemErro($e));
     }
 
     public static function tratarErro(int $errno, string $errstr, string $errfile, int $errline): bool
@@ -25,13 +25,9 @@ class ErrorHandler
         if (!(error_reporting() & $errno)) {
             return false;
         }
-
-        self::responderJson(500, [
-            'error' => $errstr,
-            'file'  => $errfile,
-            'line'  => $errline,
-        ]);
-
+        $excecao = new \ErrorException($errstr, 0, $errno, $errfile, $errline);
+        self::salvarExcecao($excecao);
+        self::responderJson(500, self::getMensagemErro($excecao));
         return true;
     }
 
@@ -39,16 +35,35 @@ class ErrorHandler
     {
         $erro = error_get_last();
         if ($erro && in_array($erro['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-            self::responderJson(500, [
-                'error' => $erro['message'],
-                'file'  => $erro['file'],
-                'line'  => $erro['line'],
-            ]);
+            $excecao = new \ErrorException($erro['message'], 0, $erro['type'], $erro['file'], $erro['line']);
+            self::salvarExcecao($excecao);
+            self::responderJson(500, self::getMensagemErro($excecao));
         }
+    }
+
+    private static function salvarExcecao(Throwable $e): void
+    {
+        Excecao::salvar($e);
+    }
+
+    private static function getMensagemErro(Throwable $e): array
+    {
+        if (getenv('APP_ENV') === 'production') {
+            return ['error' => 'Ocorreu um erro inesperado. Nossa equipe já foi notificada.'];
+        }
+
+        return [
+            'error' => $e->getMessage(),
+            'file'  => $e->getFile(),
+            'line'  => $e->getLine(),
+        ];
     }
 
     private static function responderJson(int $codigo, array $dados): void
     {
+        if (headers_sent()) {
+            return;
+        }
         http_response_code($codigo);
         header('Content-Type: application/json');
         echo json_encode($dados);

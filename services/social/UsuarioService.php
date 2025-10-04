@@ -1,9 +1,9 @@
 <?php
 
-namespace services\usuario;
+namespace services\social;
 
 use Firebase\JWT\JWT;
-use models\Usuario;
+use models\social\Usuario;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\integrations\email\EmailService;
@@ -34,7 +34,7 @@ class UsuarioService {
                 $nomeArquivo = "perfil-{$usuario->idUsuario}.".pathinfo($imagemPerfil['name'], PATHINFO_EXTENSION);;
                 $resultadoUpload = File::salvarImagem($imagemPerfil, $nomeArquivo);
                 if ($resultadoUpload['success']) {
-                    Usuario::alterar_caminhoImagem($usuario->idUsuario, caminhoImagem: $resultadoUpload['relativePath']);
+                    Usuario::alterar_caminhoImagem($usuario->idUsuario, caminhoImagem: $resultadoUpload['filePath']);
                 } else {
                     throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
                 }
@@ -75,7 +75,7 @@ class UsuarioService {
                 $nomeArquivo = "perfil-{$usuario->idUsuario}.".pathinfo($imagemPerfil['name'], PATHINFO_EXTENSION);
                 $resultadoUpload = File::salvarImagem($imagemPerfil, $nomeArquivo);
                 if ($resultadoUpload['success']) {
-                    $usuario->caminhoImagem = $resultadoUpload['relativePath'];
+                    $usuario->caminhoImagem = $resultadoUpload['filePath'];
                     Usuario::alterar_caminhoImagem($usuario->idUsuario, $usuario->caminhoImagem);
                 } else {
                     throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");

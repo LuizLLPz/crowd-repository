@@ -1,9 +1,9 @@
 <?php
 namespace services\campanha;
 
-use models\Campanha;
+use models\campanha\Campanha;
 use models\Campanha\HistoricoCampanha;
-use models\Notificacao;
+use models\core\Notificacao;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\integrations\SocketService;
@@ -14,19 +14,13 @@ class CampanhaService
     {
         $pdo = Database::getConnection();
         try {
+            error_log('CRIAR_CAMPANHA_SERVICE: BEGIN');
             $pdo->beginTransaction();
             Campanha::criar_campanha($campanha);
+            error_log('CRIAR_CAMPANHA_SERVICE: Campanha created in model, ID: ' . $campanha->idCampanha);
 
             if (isset($_FILES['imagem'])) {
-                $imagemCampanha = $_FILES['imagem'];
-                $nomeArquivo = "campanha-{$campanha->idCampanha}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);
-                $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
-                if ($resultadoUpload['success']) {
-                    $campanha->caminhoImagem = $resultadoUpload['relativePath'];
-                    Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
-                } else {
-                    throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
-                }
+                self::salvarImagemCampanha($campanha);
             }
 
             $historico = new HistoricoCampanha();
@@ -37,13 +31,17 @@ class CampanhaService
             $historico->descricao = "Campanha cadastrada pelo usuário";
 
             HistoricoCampanha::salvarHistorico($historico);
+            error_log('CRIAR_CAMPANHA_SERVICE: Historico saved');
 
             $pdo->commit();
+            error_log('CRIAR_CAMPANHA_SERVICE: COMMIT SUCCEEDED');
 
-            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
+            return "/campanha/{$campanha->idCampanha}";
 
         } catch (\Exception $e) {
+            error_log('CRIAR_CAMPANHA_SERVICE: EXCEPTION CAUGHT - ' . $e->getMessage());
             $pdo->rollBack();
+            error_log('CRIAR_CAMPANHA_SERVICE: ROLLBACK EXECUTED');
             throw $e;
         }
     }
@@ -52,28 +50,21 @@ class CampanhaService
     {
         $pdo = Database::getConnection();
         try {
+            error_log('$_FILES in CampanhaService: ' . print_r($_FILES, true));
             $pdo->beginTransaction();
             $campanhaAntiga = Campanha::obter_campanha($campanha->idCampanha);
 
             Campanha::editar_campanha($campanha);
 
             if (isset($_FILES['imagem'])) {
-                $imagemCampanha = $_FILES['imagem'];
-                $nomeArquivo = "campanha-{$campanha->idCampanha}.".pathinfo($imagemCampanha['name'], PATHINFO_EXTENSION);
-                $resultadoUpload = File::salvarImagem($imagemCampanha, $nomeArquivo);
-                if ($resultadoUpload['success']) {
-                    $campanha->caminhoImagem = $resultadoUpload['relativePath'];
-                    Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
-                } else {
-                    throw new \Exception("Falha no upload da imagem: {$resultadoUpload["message"]}");
-                }
+                self::salvarImagemCampanha($campanha);
             } else if (!empty($campanhaAntiga['caminhoImagem']) && empty($campanha->caminhoImagem)) {
                 File::delete($campanhaAntiga['caminhoImagem']);
                 $campanha->caminhoImagem = '';
                 Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
             }
             $pdo->commit();
-            return "{$_ENV["CORS_ORIGIN"]}/campanha/{$campanha->idCampanha}";
+            return $campanha->caminhoImagem ?? "";
 
         } catch (\Exception $e) {
             $pdo->rollBack();
@@ -180,5 +171,24 @@ class CampanhaService
             throw $e;
         }
     }
+
+    private static function salvarImagemCampanha(Campanha $campanha): void
+    {
+        if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
+            $nomeArquivo = "campanha-{$campanha->idCampanha}";
+            $resultadoUpload = File::salvarImagem($_FILES['imagem'], $nomeArquivo);
+            if ($resultadoUpload['success']) {
+                $campanha->caminhoImagem = $resultadoUpload['filePath'];
+                Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
+                error_log('CampanhaService::salvarImagemCampanha: Image saved successfully. Path: ' . $campanha->caminhoImagem);
+            } else {
+                error_log('CampanhaService::salvarImagemCampanha: Image upload failed: ' . $resultadoUpload['message']);
+                throw new \Exception("Falha no upload da imagem: " . $resultadoUpload['message']);
+            }
+        } else {
+            error_log('CampanhaService::salvarImagemCampanha: No image file or upload error.');
+        }
+    }
+
 }
 

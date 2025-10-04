@@ -2,9 +2,9 @@
 
 namespace api\controllers;
 
-use models\Campanha;
-use models\campanha\enums\FiltroCampanha;
-use models\campanha\enums\StatusCampanha;
+use models\campanha\Campanha;
+use models\campanha\HistoricoCampanha;
+use models\campanha\InscricaoCampanha;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
@@ -22,16 +22,32 @@ class CampanhaController extends ControllerBase
     {
         $idCampanha = $_GET["idCampanha"];
         $resp = Campanha::obter_campanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
-        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        error_log('API Response: ' . print_r($resp, true));
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    #[HttpGet('/campanhas')]
-    public function listar(): void
+    #[HttpGet(path: '/campanha/historico')]
+    public function obterHistorico(): void
+    {
+        $idCampanha = $_GET['idCampanha'] ?? null;
+        if (!$idCampanha) {
+            Http::HttpResponse(400, 'ID da campanha é obrigatório.');
+            return;
+        }
+
+        $historico = HistoricoCampanha::listarPorCampanha((int)$idCampanha);
+        Http::HttpResponse(200, 'Histórico da campanha buscado com sucesso.', $historico);
+    }
+
+    #[HttpGet(path: '/campanhas')]
+    public function obterCampanhas(): void
     {
         $pesquisa = $_GET['pesquisa'] ?? null;
         $categoriaRaw = $_GET['idCategoria'] ?? null;
+        $idUsuario = $_GET['idUsuario'] ?? null;
         $categoria = ($categoriaRaw === '' ? null : (int) $categoriaRaw);
         $campanhasUsuario = $_GET['campanhasUsuario'] ?? null;
+        $campanhasApoiadas = $_GET['campanhasApoiadas'] ?? null;
         $filtroAdministrador = $_GET['filtroAdministrador'] ?? null;
 
         $administrador = ControllerBase::$usuarioAutenticado->funcao == FuncaoUsuario::ADMIN;
@@ -41,9 +57,15 @@ class CampanhaController extends ControllerBase
         }
 
         $campanhasUsuarioBool = filter_var($campanhasUsuario, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        $idUsuario = $campanhasUsuarioBool ? ControllerBase::$usuarioAutenticado->idUsuario : null;
+        if ($idUsuario == null && $campanhasUsuarioBool) $idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
 
-        $resp = Campanha::buscar_campanhas($administrador, $pesquisa, $categoria, $idUsuario, $filtroAdministrador);
+        $idUsuarioApoiador = null;
+        $campanhasApoiadasBool = filter_var($campanhasApoiadas, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($campanhasApoiadasBool) {
+            $idUsuarioApoiador = ControllerBase::$usuarioAutenticado->idUsuario;
+        }
+
+        $resp = Campanha::buscar_campanhas($administrador, $pesquisa, $categoria, $idUsuario, $filtroAdministrador, $idUsuarioApoiador);
         Http::HttpResponse(200, "Campanhas encontradas", $resp);
     }
 
@@ -51,7 +73,8 @@ class CampanhaController extends ControllerBase
     public function salvar(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $url = CampanhaService::criar_campanha($campanha);
+        $path = CampanhaService::criar_campanha($campanha);
+        $url = $_ENV['CORS_ORIGIN'] . $path;
         $link = new Link(LinkRel::SELF, $url, "campanha criado");
         $links = array($link);
         Http::HttpResponse(200, "Campanha criada com sucesso!", [
@@ -62,7 +85,7 @@ class CampanhaController extends ControllerBase
     }
 
     #[HttpPut('/campanha')]
-    public function editar_put(Campanha $campanha): void
+    public function editar(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $msg = CampanhaService::editar_campanha($campanha);
@@ -88,6 +111,14 @@ class CampanhaController extends ControllerBase
     {
         CampanhaService::desativar_campanha($campanha->idCampanha, $campanha->status, idAtendente: ControllerBase::$usuarioAutenticado->idUsuario);
         Http::HttpResponse(200, "Campanha desativada");
+    }
+
+    #[HttpGet('/campanha/apoiadores', auth: false)]
+    public function obterApoiadores(): void
+    {
+        $idCampanha = $_GET["idCampanha"] ?? null;
+        $doadores = Campanha::obter_apoiadores($idCampanha);
+        Http::HttpResponse(200, "Doadores encontrados", $doadores);
     }
 
 }

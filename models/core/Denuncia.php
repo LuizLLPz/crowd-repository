@@ -1,6 +1,6 @@
 <?php
 
-namespace models\campanha;
+namespace models\core;
 
 use models\campanha\enums\MotivoDenuncia;
 use models\campanha\enums\TipoAlvo;
@@ -24,10 +24,24 @@ class Denuncia extends Entidade
     public ?string $atendimento = "";
 
 
-    public static function buscarDenuncias(?int $idAlvo = null, ?string $tipoAlvo = null): array {
+    public static function buscar_denuncia_objeto_usuario(Denuncia $denuncia) {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("SELECT D.*, U.nomeUsuario, U.email AS emailUsuario
+                                     FROM Denuncia D
+                                     JOIN Usuario U ON D.idUsuario = U.idUsuario
+                                     WHERE D.idAlvo = :idAlvo AND D.tipoAlvo = :tipoAlvo AND D.idUsuario = :idUsuario");
+        $stmt->execute([
+            ':idAlvo' => $denuncia->idAlvo,
+            ':tipoAlvo' => $denuncia->tipoAlvo,
+            ':idUsuario' => $denuncia->idUsuario
+        ]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    public static function buscar_denuncias(?int $idAlvo = null, ?string $tipoAlvo = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT D.*, U.nomeUsuario, U.email AS emailUsuario
+        $sql = "SELECT D.*, CONCAT(D.tipoAlvo, '-', D.idAlvo, '-', D.idUsuario) AS id, U.nomeUsuario, U.email AS emailUsuario
                 FROM Denuncia D
                 JOIN Usuario U ON D.idUsuario = U.idUsuario";
 
@@ -62,7 +76,7 @@ class Denuncia extends Entidade
     public static function denunciarObjeto(Denuncia $denuncia): string {
         $pdo = Database::getConnection();
 
-        $sql = "INSERT INTO Denuncia (idAlvo, idUsuario, motivoDenuncia, comentario, tipoAlvo, status, dataCriacao) VALUES (:idDenuncia, :idUsuario, :motivoDenuncia, :comentario, :tipoAlvo, 'Ativo', NOW())";
+        $sql = "INSERT INTO Denuncia (idAlvo, idUsuario, motivoDenuncia, comentario, tipoAlvo, status, dataCriacao) VALUES (:idDenuncia, :idUsuario, :motivoDenuncia, :comentario, :tipoAlvo, 'Ativa', NOW())";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([

@@ -1,5 +1,5 @@
 <?php
-namespace models;
+namespace models\core;
 
 use modules\db\Database;
 use PDO;
@@ -65,7 +65,6 @@ class Notificacao
         $sql = "UPDATE Notificacao SET lida = TRUE WHERE idNotificacao = :idNotificacao AND idUsuario = :idUsuario";
 
         $stmt = $pdo->prepare($sql);
-        // Correção de sintaxe aqui:
         return $stmt->execute([
             ':idNotificacao' => $idNotificacao,
             ':idUsuario' => $idUsuario

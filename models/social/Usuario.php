@@ -1,12 +1,12 @@
 <?php
 
-namespace models;
+namespace models\social;
 
 use DateTime;
 use modules\core\tipos\Entidade;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
-use modules\core\utils\Utils;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 
 class Usuario extends Entidade
 {
@@ -20,6 +20,11 @@ class Usuario extends Entidade
     public bool $verificado;
     public ?FuncaoUsuario $funcao = null;
     public ?string $caminhoImagem = '';
+    public ?string $stripe_account_id = null;
+    public ?string $stripe_details_submitted = null;
+    public ?string $stripe_charges_enabled = null;
+    public ?string $stripe_payouts_enabled = null;
+    public ?string $stripe_requirements_due = null;
     public ?string $telefone = '';
     public ?string $linkedin = '';
     public ?string $github = '';
@@ -46,19 +51,17 @@ class Usuario extends Entidade
     public static function buscar_usuario(int $idUsuario): Usuario
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->query(new Usuario()->select);
-
         $stmt = $pdo->prepare("SELECT U.*, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
 
-        if ($usuario && is_string($usuario->funcao)) {
-            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
         }
 
-        if ($usuario->caminhoImagem != null) {
-            $usuario->caminhoImagem = Utils::getServerUrl() . '/' . $usuario->caminhoImagem;
+        if ($usuario && is_string($usuario->funcao)) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }
 
         return $usuario;
@@ -76,7 +79,15 @@ class Usuario extends Entidade
     {
         $pdo = Database::getConnection();
         $stmt = $pdo->query(new Usuario()->select);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($usuarios as &$usuario) {
+            if (!empty($usuario['caminhoImagem'])) {
+                $usuario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($usuario['caminhoImagem']);
+            }
+        }
+
+        return $usuarios;
     }
 
     public static function buscar_usuarios_input(): array
@@ -173,6 +184,10 @@ class Usuario extends Entidade
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
 
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
+        }
+
         if ($usuario && is_string($usuario->funcao)) {
             $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }
@@ -187,6 +202,9 @@ class Usuario extends Entidade
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
+        }
         if ($usuario && is_string($usuario->funcao)) {
             $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }
@@ -217,5 +235,16 @@ class Usuario extends Entidade
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idUsuario' => $idUsuario]);
         return true;
+    }
+
+
+    public static function atualizarStripeAccountId(int $idUsuario, string $stripeAccountId): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Usuario SET stripe_account_id = :stripe_account_id WHERE idUsuario = :idUsuario");
+        $stmt->execute([
+            ':stripe_account_id' => $stripeAccountId,
+            ':idUsuario' => $idUsuario
+        ]);
     }
 }

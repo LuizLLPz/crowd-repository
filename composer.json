@@ -17,7 +17,9 @@
     "ext-fileinfo": "*",
     "cboden/ratchet": "^0.4.4",
     "react/http": "^1.11",
-    "guzzlehttp/guzzle": "^7.10"
+    "guzzlehttp/guzzle": "^7.10",
+    "stripe/stripe-php": "^14.1",
+    "google/cloud-storage": "^1.48"
   },
   "autoload": {
     "psr-4": {

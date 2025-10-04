@@ -2,7 +2,6 @@
 namespace services\integrations;
 
 use GuzzleHttp\Client;
-use models\Notificacao;
 
 class SocketService
 {

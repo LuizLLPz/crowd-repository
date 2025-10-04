@@ -2,7 +2,7 @@
 
 namespace api\controllers;
 
-use models\Categoria;
+use models\campanha\Categoria;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 

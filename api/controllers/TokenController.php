@@ -3,7 +3,7 @@
 namespace api\controllers;
 
 use Firebase\JWT\JWT;
-use models\Usuario;
+use models\social\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\utils\Http;
@@ -40,7 +40,7 @@ class TokenController extends ControllerBase
                 ]
             );
             if (!$resultado->verificado) {
-                Usuario::gerarNovoCodigo($resultado);
+                Usuario::gerar_novo_codigo($resultado);
                 $emailService = new EmailService();
                 $emailService->enviar($resultado->email, $resultado->nomeUsuario, "Verificar conta crowd repository",
                     "O seu código de verificação é <b>{$resultado->codigoVerificacao}</b>");

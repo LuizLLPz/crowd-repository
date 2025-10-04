@@ -1,9 +1,9 @@
 <?php
-namespace services\campanha;
+namespace services\social;
 
 use models\campanha\enums\TipoAlvo;
-use models\Comentario;
-use models\Curtida;
+use models\social\Comentario;
+use models\social\Curtida;
 use modules\db\Database;
 
 class ComentarioService

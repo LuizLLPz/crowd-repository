@@ -2,6 +2,8 @@
 
 namespace modules\core\utils;
 
+use services\integrations\google\GoogleCloudStorageService;
+
 class File
 {
     public static function salvarImagem(
@@ -62,37 +64,63 @@ class File
 
         $baseName = $fileName ? pathinfo($fileName, PATHINFO_FILENAME) : uniqid('', true);
         $sanitizedBaseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $baseName);
-        $newFileName = $sanitizedBaseName . '.' . $fileExtension;
+        $newFileName = $sanitizedBaseName . '.webp';
         $filePath = rtrim($destinationDirectory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $newFileName;
 
-        $moveSuccess = false;
-        if (is_uploaded_file($fileTmpName)) {
-            $moveSuccess = move_uploaded_file($fileTmpName, $filePath);
-        } else {
-            $moveSuccess = rename($fileTmpName, $filePath);
+        $image = null;
+        switch ($detectedMimeType) {
+            case 'image/jpeg':
+                $image = imagecreatefromjpeg($fileTmpName);
+                break;
+            case 'image/png':
+                $image = imagecreatefrompng($fileTmpName);
+                break;
+            case 'image/gif':
+                $image = imagecreatefromgif($fileTmpName);
+                break;
+            case 'image/webp':
+                $image = imagecreatefromwebp($fileTmpName);
+                break;
         }
 
-        if ($moveSuccess) {
-            $relativePath = 'uploads/images/' . $newFileName;
-            return [
-                'success' => true,
-                'filePath' => $filePath,
-                'relativePath' => $relativePath,
-                'message' => 'Arquivo salvo com sucesso.'
-            ];
-        } else {
+        if (!$image) {
+            return ['success' => false, 'message' => 'Falha ao criar recurso de imagem a partir do arquivo.'];
+        }
+
+        $saveSuccess = imagewebp($image, $filePath, 80);
+        imagedestroy($image);
+
+        if (!$saveSuccess) {
             if (file_exists($fileTmpName)) {
                 unlink($fileTmpName);
             }
-            return ['success' => false, 'message' => 'Falha ao mover o arquivo para o diretório de destino.'];
+            return ['success' => false, 'message' => 'Falha ao salvar a imagem convertida localmente.'];
+        }
+
+        try {
+            $objectName = GoogleCloudStorageService::uploadFile($filePath, $newFileName);
+
+            unlink($filePath);
+
+            return [
+                'success' => true,
+                'filePath' => $objectName,
+                'message' => 'Arquivo salvo com sucesso no Google Cloud Storage.'
+            ];
+        } catch (\Exception $e) {
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            return ['success' => false, 'message' => 'Falha ao fazer upload para o Google Cloud Storage: ' . $e->getMessage()];
         }
     }
 
     public static function delete(string $filePath): bool
     {
-        if (file_exists($filePath) && is_file($filePath)) {
-            return unlink($filePath);
+        if (empty($filePath)) {
+            return false;
         }
-        return false;
+        GoogleCloudStorageService::deleteFile($filePath);
+        return true;
     }
 }
