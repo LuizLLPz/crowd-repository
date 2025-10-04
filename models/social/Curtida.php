@@ -3,6 +3,7 @@ namespace models\social;
 
 use modules\core\tipos\Entidade;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 
 class Curtida extends Entidade
 {
@@ -36,5 +37,36 @@ class Curtida extends Entidade
             $stmt->execute([':idAlvo' => $curtida->idAlvo]);
         }
         return $removerCurtida;
+    }
+
+    public static function buscarPorAlvo(string $tipoAlvo, int $idAlvo): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "
+            SELECT
+                U.idUsuario,
+                U.nomeUsuario,
+                U.caminhoImagem
+            FROM
+                Curtida C
+            JOIN
+                Usuario U ON C.idUsuario = U.idUsuario
+            WHERE
+                C.tipoAlvo = :tipoAlvo AND C.idAlvo = :idAlvo
+            ORDER BY
+                U.nomeUsuario
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':tipoAlvo' => $tipoAlvo, ':idAlvo' => $idAlvo]);
+        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($usuarios as &$usuario) {
+            if (!empty($usuario['caminhoImagem'])) {
+                $usuario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($usuario['caminhoImagem']);
+            }
+        }
+
+        return $usuarios;
     }
 }

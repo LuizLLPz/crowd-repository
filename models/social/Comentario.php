@@ -5,6 +5,7 @@ namespace models\social;
 use modules\core\tipos\Entidade;
 use modules\core\utils\Utils;
 use modules\db\Database;
+use services\integrations\google\GoogleCloudStorageService;
 
 class Comentario extends Entidade
 {
@@ -67,10 +68,10 @@ class Comentario extends Entidade
 
         foreach ($comentarios as &$comentario) {
             if (!empty($comentario['caminhoImagem'])) {
-                $comentario['caminhoImagem'] = Utils::getServerUrl() . '/' . $comentario['caminhoImagem'];
+                $comentario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($comentario['caminhoImagem']);
             }
             if (!empty($comentario['caminhoFotoAutor'])) {
-                $comentario['caminhoFotoAutor'] = Utils::getServerUrl() . '/' . $comentario['caminhoFotoAutor'];
+                $comentario['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($comentario['caminhoFotoAutor']);
             }
         }
         return $comentarios;
@@ -88,6 +89,11 @@ class Comentario extends Entidade
             }
         }
         $comentario->indicePilha = $indicePilha;
+
+        if (!isset($comentario->comentario) || $comentario->comentario === 'undefined') {
+            $comentario->comentario = '';
+        }
+
 
 
         $sql = "

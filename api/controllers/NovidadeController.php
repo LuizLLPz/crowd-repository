@@ -47,7 +47,7 @@ class NovidadeController extends ControllerBase
         echo json_encode(['message' => "Novidade atualizada com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
-
+    #[HttpPost('/novidade/curtir')]
     public function curtir(Novidade $novidade): void
     {
         NovidadeService::curtir_novidade($novidade->id, ControllerBase::$usuarioAutenticado->idUsuario);
