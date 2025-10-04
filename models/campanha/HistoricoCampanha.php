@@ -33,7 +33,11 @@ class HistoricoCampanha extends Entidade
     {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT * FROM HistoricoCampanha WHERE idCampanha = :idCampanha ORDER BY dataCriacao DESC";
+        $sql = "SELECT h.*, u.nomeUsuario as nomeCriador 
+                FROM HistoricoCampanha h
+                JOIN Usuario u ON h.idCriador = u.idUsuario
+                WHERE h.idCampanha = :idCampanha 
+                ORDER BY h.dataCriacao DESC";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idCampanha' => $idCampanha]);
 

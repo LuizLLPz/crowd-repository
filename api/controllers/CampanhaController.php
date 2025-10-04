@@ -3,6 +3,8 @@
 namespace api\controllers;
 
 use models\campanha\Campanha;
+use models\campanha\HistoricoCampanha;
+use models\campanha\InscricaoCampanha;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
@@ -24,8 +26,21 @@ class CampanhaController extends ControllerBase
         echo json_encode($resp, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    #[HttpGet('/campanhas')]
-    public function listar(): void
+    #[HttpGet(path: '/campanha/historico')]
+    public function obterHistorico(): void
+    {
+        $idCampanha = $_GET['idCampanha'] ?? null;
+        if (!$idCampanha) {
+            Http::HttpResponse(400, 'ID da campanha é obrigatório.');
+            return;
+        }
+
+        $historico = HistoricoCampanha::listarPorCampanha((int)$idCampanha);
+        Http::HttpResponse(200, 'Histórico da campanha buscado com sucesso.', $historico);
+    }
+
+    #[HttpGet(path: '/campanhas')]
+    public function obterCampanhas(): void
     {
         $pesquisa = $_GET['pesquisa'] ?? null;
         $categoriaRaw = $_GET['idCategoria'] ?? null;
