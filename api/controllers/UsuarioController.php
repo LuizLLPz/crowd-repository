@@ -12,7 +12,8 @@ use modules\core\utils\Utils;
 use services\integrations\email\EmailService;
 use services\social\UsuarioService;
 
-class UsuarioController extends ControllerBase {
+class UsuarioController extends ControllerBase
+{
 
     #[HttpGet('/usuario')]
     public function buscar_usuario(): void
@@ -25,9 +26,26 @@ class UsuarioController extends ControllerBase {
     #[HttpGet('/usuarios')]
     public function listar(): void
     {
-       $resp = Usuario::buscar_usuarios();
-       echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        $resp = Usuario::buscar_usuarios();
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
+
+    #[HttpGet('/usuariosinput')]
+    public function buscar_usuarios_input(): void
+    {
+        $resp = Usuario::buscar_usuarios_input();
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
+
+    #[HttpGet('/buscausuarioid')]
+    public function buscar_usuarios_por_id(): void
+    {
+        $idUsuario = $_GET['idUsuario'];
+        $resp = Usuario::buscar_usuario_por_id($idUsuario);
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+    }
+
 
     #[HttpPost('/usuario', auth: false)]
     public function salvar(Usuario $usuario): void
@@ -45,6 +63,7 @@ class UsuarioController extends ControllerBase {
             'email' => $usuario->email,
         ]);
     }
+
 
     #[HttpPut("/usuario/editarPerfil")]
     public function editar_perfil(Usuario $usuario): void
@@ -74,8 +93,12 @@ class UsuarioController extends ControllerBase {
         Usuario::verificar_usuario($usuario->idUsuario);
 
         $emailService = new EmailService();
-        $emailService->enviar($resultado->email, $resultado->nomeUsuario, "Verificar conta crowd repository",
-            "Conta verificada com sucesso! Aproveite o crowd repository!");
+        $emailService->enviar(
+            $resultado->email,
+            $resultado->nomeUsuario,
+            "Verificar conta crowd repository",
+            "Conta verificada com sucesso! Aproveite o crowd repository!"
+        );
 
         Http::HttpResponse(200, "Conta verificada com sucesso!");
     }

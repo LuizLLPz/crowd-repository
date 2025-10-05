@@ -90,6 +90,29 @@ class Usuario extends Entidade
         return $usuarios;
     }
 
+    public static function buscar_usuarios_input(): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT idUsuario, nomeUsuario, caminhoImagem, idCargo FROM Usuario";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+
+    public static function buscar_usuario_por_id(string $idUsuario): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT u.idUsuario, u.nomeUsuario, u.caminhoImagem, CASE WHEN u.idCargo = 0 OR u.idCargo IS NULL THEN 'Não informado' ELSE c.titulo END AS cargo, u.telefone, u.linkedin, u.github, u.instagram, u.descricao FROM Usuario u LEFT JOIN Cargo c ON u.idCargo = c.id WHERE TRIM(u.idUsuario) = :idUsuario";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idUsuario' => $idUsuario
+        ]);
+        $usuario = $stmt->fetch();
+        return $usuario;
+
+    }
+
     public static function criar_usuario(Usuario $usuario): string
     {
 
@@ -152,10 +175,10 @@ class Usuario extends Entidade
         ]);
     }
 
-    public static function buscar_usuario_por_email(string $nome): Usuario | false
+    public static function buscar_usuario_por_email(string $nome): Usuario|false
     {
         $pdo = Database::getConnection();
-        $sql = new Usuario()->select." WHERE email = :nomeUsuario";
+        $sql = new Usuario()->select . " WHERE email = :nomeUsuario";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':nomeUsuario' => $nome]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
@@ -171,10 +194,10 @@ class Usuario extends Entidade
         return $usuario;
     }
 
-    public static function buscar_usuario_por_id(int $idUsuario): Usuario | false
+    public static function buscarUsuarioPorId(int $idUsuario): Usuario|false
     {
         $pdo = Database::getConnection();
-        $sql = new Usuario()->select." WHERE idUsuario = :idUsuario";
+        $sql = new Usuario()->select . " WHERE idUsuario = :idUsuario";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
@@ -189,16 +212,8 @@ class Usuario extends Entidade
 
     }
 
-    public static function obter_nomeUsuario(int $idUsuario): string {
-        $pdo = Database::getConnection();
-        $sql = "SELECT nomeUsuario FROM Usuario WHERE idUsuario = :idUsuario";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':idUsuario' => $idUsuario]);
-        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $result ? $result['nomeUsuario'] : '';
-    }
-
-    public static function gerar_novo_codigo(Usuario $usuario): bool {
+    public static function gerarNovoCodigo(Usuario $usuario): bool
+    {
         $pdo = Database::getConnection();
         $usuario->codigoVerificacao = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
         $expiracaoCodigo = new DateTime('+15 minutes')->format('Y-m-d H:i:s');
@@ -213,7 +228,8 @@ class Usuario extends Entidade
         return true;
     }
 
-    public static function verificar_usuario(int $idUsuario): bool {
+    public static function verificarUsuario(int $idUsuario): bool
+    {
         $pdo = Database::getConnection();
         $sql = "UPDATE Usuario SET verificado = 1 WHERE idUsuario = :idUsuario";
         $stmt = $pdo->prepare($sql);
