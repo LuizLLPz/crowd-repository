@@ -13,6 +13,13 @@ use services\integrations\SocketService;
 
 class DenunciaService
 {
+    private static function criarNotificacaoSeDiferente(Notificacao $notificacao, int $idCriador): void
+    {
+        if ($notificacao->idUsuario !== $idCriador) {
+            Notificacao::criar($notificacao);
+        }
+    }
+
     public static function denunciar(Denuncia $denuncia): string
     {
         $res = Denuncia::denunciarObjeto($denuncia);
@@ -69,6 +76,9 @@ class DenunciaService
                 case 'Campanha':
                     $idDonoAlvo = Campanha::obter_idUsuario($denuncia->idAlvo);
                     break;
+                case 'Usuario':
+                    $idDonoAlvo = $denuncia->idAlvo;
+                    break;
             }
 
             if ($denuncia->status == "Aprovada") {
@@ -77,7 +87,7 @@ class DenunciaService
                 $notificacaoDono->descricao = "Um item seu não está de acordo com os nossos termos e foi excluído. Para mais informações entre em contato conosco!";
                 $notificacaoDono->tipo = "item_excluido";
                 $notificacaoDono->idItem = $denuncia->idAlvo;
-                Notificacao::criar($notificacaoDono);
+                self::criarNotificacaoSeDiferente($notificacaoDono, $denuncia->idAtendente);
                 $notificacoes[] = $notificacaoDono;
             }
 

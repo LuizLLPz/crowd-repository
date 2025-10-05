@@ -19,7 +19,9 @@
     "react/http": "^1.11",
     "guzzlehttp/guzzle": "^7.10",
     "stripe/stripe-php": "^14.1",
-    "google/cloud-storage": "^1.48"
+    "google/cloud-storage": "^1.48",
+    "php-ffmpeg/php-ffmpeg": "^1.0",
+    "sendgrid/sendgrid": "^8.1"
   },
   "autoload": {
     "psr-4": {

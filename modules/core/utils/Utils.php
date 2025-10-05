@@ -68,24 +68,28 @@ class Utils
                 $tmpPath = tempnam(sys_get_temp_dir(), 'php_upload_');
                 file_put_contents($tmpPath, $body);
 
-                $fileData = [
-                    'name' => $fileName,
-                    'type' => $headers['content-type'] ?? 'application/octet-stream',
-                    'tmp_name' => $tmpPath,
-                    'error' => UPLOAD_ERR_OK,
-                    'size' => strlen($body),
-                ];
+                if (preg_match('/^(.*?)\[(\d*)\]$/', $fieldName, $arrayMatches)) {
+                    $baseFieldName = $arrayMatches[1];
+                    $index = $arrayMatches[2] !== '' ? (int)$arrayMatches[2] : count($result['files'][$baseFieldName]['name'] ?? []);
 
-                if (str_ends_with($fieldName, '[]')) {
-                    $fieldName = rtrim($fieldName, '[]');
-                    $result['files'][$fieldName][] = $fileData;
+                    $result['files'][$baseFieldName]['name'][$index] = $fileName;
+                    $result['files'][$baseFieldName]['type'][$index] = $headers['content-type'] ?? 'application/octet-stream';
+                    $result['files'][$baseFieldName]['tmp_name'][$index] = $tmpPath;
+                    $result['files'][$baseFieldName]['error'][$index] = UPLOAD_ERR_OK;
+                    $result['files'][$baseFieldName]['size'][$index] = strlen($body);
                 } else {
-                    $result['files'][$fieldName] = $fileData;
+                    $result['files'][$fieldName] = [
+                        'name' => $fileName,
+                        'type' => $headers['content-type'] ?? 'application/octet-stream',
+                        'tmp_name' => $tmpPath,
+                        'error' => UPLOAD_ERR_OK,
+                        'size' => strlen($body),
+                    ];
                 }
             } else {
-                if (str_ends_with($fieldName, '[]')) {
-                    $fieldName = rtrim($fieldName, '[]');
-                    $result['post'][$fieldName][] = trim($body);
+                if (preg_match('/^(.*?)\[\]$/', $fieldName, $arrayMatches)) {
+                    $baseFieldName = $arrayMatches[1];
+                    $result['post'][$baseFieldName][] = trim($body);
                 } else {
                     $result['post'][$fieldName] = trim($body);
                 }

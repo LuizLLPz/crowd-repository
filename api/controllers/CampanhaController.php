@@ -14,6 +14,7 @@ use modules\core\tipos\http\tipos\Link;
 use modules\core\tipos\LinkRel;
 use modules\core\utils\Http;
 use services\campanha\CampanhaService;
+use services\core\MidiaService;
 
 class CampanhaController extends ControllerBase
 {
@@ -73,9 +74,17 @@ class CampanhaController extends ControllerBase
     public function salvar(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
-        $path = CampanhaService::criar_campanha($campanha);
-        $url = $_ENV['CORS_ORIGIN'] . $path;
-        $link = new Link(LinkRel::SELF, $url, "campanha criado");
+        CampanhaService::criar_campanha($campanha);
+
+        try {
+            MidiaService::processarMidias($_FILES, [], $campanha->idCampanha, 'Campanha');
+        } catch (\Exception $e) {
+            Http::HttpResponse(400, $e->getMessage());
+            return;
+        }
+
+        $url = $_ENV['CORS_ORIGIN'] . '/campanha/' . $campanha->idCampanha;
+        $link = new Link(LinkRel::SELF, $url, "campanha criada");
         $links = array($link);
         Http::HttpResponse(200, "Campanha criada com sucesso!", [
             'idCampanha' => $campanha->idCampanha,
@@ -89,6 +98,16 @@ class CampanhaController extends ControllerBase
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
         $msg = CampanhaService::editar_campanha($campanha);
+
+        $mediaData = json_decode($_POST['mediaData'] ?? '[]', true);
+
+        try {
+            MidiaService::processarMidias($_FILES, $mediaData, $campanha->idCampanha, 'Campanha');
+        } catch (\Exception $e) {
+            Http::HttpResponse(400, $e->getMessage());
+            return;
+        }
+
         Http::HttpResponse(200, $msg);
     }
 

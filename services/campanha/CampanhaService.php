@@ -7,10 +7,11 @@ use models\core\Notificacao;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\integrations\SocketService;
+use services\core\MidiaService;
 
 class CampanhaService
 {
-    public static function criar_campanha(Campanha $campanha): string
+    public static function criar_campanha(Campanha $campanha): void
     {
         $pdo = Database::getConnection();
         try {
@@ -18,10 +19,6 @@ class CampanhaService
             $pdo->beginTransaction();
             Campanha::criar_campanha($campanha);
             error_log('CRIAR_CAMPANHA_SERVICE: Campanha created in model, ID: ' . $campanha->idCampanha);
-
-            if (isset($_FILES['imagem'])) {
-                self::salvarImagemCampanha($campanha);
-            }
 
             $historico = new HistoricoCampanha();
             $historico->idCampanha = $campanha->idCampanha;
@@ -35,8 +32,6 @@ class CampanhaService
 
             $pdo->commit();
             error_log('CRIAR_CAMPANHA_SERVICE: COMMIT SUCCEEDED');
-
-            return "/campanha/{$campanha->idCampanha}";
 
         } catch (\Exception $e) {
             error_log('CRIAR_CAMPANHA_SERVICE: EXCEPTION CAUGHT - ' . $e->getMessage());
@@ -56,15 +51,8 @@ class CampanhaService
 
             Campanha::editar_campanha($campanha);
 
-            if (isset($_FILES['imagem'])) {
-                self::salvarImagemCampanha($campanha);
-            } else if (!empty($campanhaAntiga['caminhoImagem']) && empty($campanha->caminhoImagem)) {
-                File::delete($campanhaAntiga['caminhoImagem']);
-                $campanha->caminhoImagem = '';
-                Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
-            }
             $pdo->commit();
-            return $campanha->caminhoImagem ?? "";
+            return "Campanha atualizada com sucesso!";
 
         } catch (\Exception $e) {
             $pdo->rollBack();
@@ -96,11 +84,9 @@ class CampanhaService
             $notificacao->tipo = "campanha_reprovada";
             $notificacao->idItem = $idCampanha;
 
-            Notificacao::criar($notificacao);
+            self::criarNotificacaoSeDiferente($notificacao, $idAprovador);
             HistoricoCampanha::salvarHistorico($historico);
             $pdo->commit();
-
-            SocketService::notificar([$notificacao]);
 
             return "Campanha reprovada";
         } catch (\Exception $e) {
@@ -134,11 +120,9 @@ class CampanhaService
             $notificacao->tipo = "campanha_aprovada";
             $notificacao->idItem = $idCampanha;
 
-            Notificacao::criar($notificacao);
+            self::criarNotificacaoSeDiferente($notificacao, $idAprovador);
             HistoricoCampanha::salvarHistorico($historico);
             $pdo->commit();
-
-            SocketService::notificar([$notificacao]);
 
             return "Campanha aprovada";
         } catch (\Exception $e) {
@@ -158,11 +142,21 @@ class CampanhaService
             $historico = new HistoricoCampanha();
             $historico->idCampanha = $idCampanha;
             $historico->statusAntigo = $statusAntigo;
-            $historico->statusNovo = 0;
+            $historico->statusNovo = 6;
             $historico->idCriador = $idAtendente;
             $historico->descricao = "Campanha desativada pela moderação";
 
             HistoricoCampanha::salvarHistorico($historico);
+
+            $campanha = Campanha::obter_campanha($idCampanha);
+            $notificacao = new Notificacao();
+            $notificacao->idUsuario = $campanha['idUsuario'];
+            $notificacao->titulo = "Campanha Desativada!";
+            $notificacao->descricao = "Sua campanha '{$campanha['titulo']}' foi desativada pela moderação.";
+            $notificacao->tipo = "campanha_desativada";
+            $notificacao->idItem = $idCampanha;
+
+            self::criarNotificacaoSeDiferente($notificacao, $idAtendente);
 
             if (!$hasTransaction) $pdo->commit();
 
@@ -172,21 +166,11 @@ class CampanhaService
         }
     }
 
-    private static function salvarImagemCampanha(Campanha $campanha): void
+    private static function criarNotificacaoSeDiferente(Notificacao $notificacao, int $idCriador): void
     {
-        if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
-            $nomeArquivo = "campanha-{$campanha->idCampanha}";
-            $resultadoUpload = File::salvarImagem($_FILES['imagem'], $nomeArquivo);
-            if ($resultadoUpload['success']) {
-                $campanha->caminhoImagem = $resultadoUpload['filePath'];
-                Campanha::alterar_caminhoImagem($campanha->idCampanha, $campanha->caminhoImagem);
-                error_log('CampanhaService::salvarImagemCampanha: Image saved successfully. Path: ' . $campanha->caminhoImagem);
-            } else {
-                error_log('CampanhaService::salvarImagemCampanha: Image upload failed: ' . $resultadoUpload['message']);
-                throw new \Exception("Falha no upload da imagem: " . $resultadoUpload['message']);
-            }
-        } else {
-            error_log('CampanhaService::salvarImagemCampanha: No image file or upload error.');
+        if ($notificacao->idUsuario !== $idCriador) {
+            Notificacao::criar($notificacao);
+            SocketService::notificar([$notificacao]);
         }
     }
 

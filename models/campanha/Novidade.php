@@ -19,7 +19,7 @@ class Novidade extends Entidade
     public int $idCampanha;
     public string $titulo;
     public string $descricao;
-    public string $imagem;
+    public array $midias = [];
     public int $qtdLikes;
     public int $qtdComentarios;
     public int $idUsuario;
@@ -36,9 +36,7 @@ class Novidade extends Entidade
         $novidade = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if ($novidade) {
-            if (!empty($novidade['imagem'])) {
-                $novidade['imagem'] = GoogleCloudStorageService::getSignedUrl($novidade['imagem']);
-            }
+            $novidade['midias'] = self::buscar_midias_novidade($idNovidade);
             if (!empty($novidade['caminhoFotoAutor'])) {
                 $novidade['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($novidade['caminhoFotoAutor']);
             }
@@ -56,9 +54,7 @@ class Novidade extends Entidade
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($novidades as &$novidade) {
-            if (!empty($novidade['imagem'])) {
-                $novidade['imagem'] = GoogleCloudStorageService::getSignedUrl($novidade['imagem']);
-            }
+            $novidade['midias'] = self::buscar_midias_novidade($novidade['id']);
             if (!empty($novidade['caminhoFotoAutor'])) {
                 $novidade['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($novidade['caminhoFotoAutor']);
             }
@@ -67,7 +63,7 @@ class Novidade extends Entidade
         return $novidades;
     }
 
-    public static function criar_noticia(Novidade $novidade, int $idUsuario, ?array $imagemFile = null): Novidade {
+    public static function criar_noticia(Novidade &$novidade, int $idUsuario): Novidade {
         $pdo = Database::getConnection();
         $sql = "INSERT INTO Novidade (idCampanha, idUsuario, titulo, descricao, dataCriacao, status) 
         VALUES (:idCampanha, :idUsuario, :titulo, :descricao, now(), :status)";
@@ -82,21 +78,6 @@ class Novidade extends Entidade
         ]);
         $novidade->id = $pdo->lastInsertId();
 
-        if ($imagemFile && $imagemFile['error'] === UPLOAD_ERR_OK) {
-            $nomeArquivo = "campanha-{$novidade->idCampanha}-novidade-{$novidade->id}";
-            $resultadoUpload = File::salvarImagem($imagemFile, $nomeArquivo);
-            if ($resultadoUpload['success']) {
-                $novidade->imagem = $resultadoUpload['filePath'];
-
-                $stmtImg = $pdo->prepare("UPDATE Novidade SET imagem = :imagem WHERE id = :id");
-                $stmtImg->execute([
-                    ':imagem' => $novidade->imagem,
-                    ':id' => $novidade->id
-                ]);
-            } else {
-                throw new \Exception("Falha no upload da imagem: " . $resultadoUpload['message']);
-            }
-        }
         return $novidade;
     }
 
@@ -130,5 +111,20 @@ class Novidade extends Entidade
         return $result ? $result['idUsuario'] : null;
     }
 
+    public static function buscar_midias_novidade(int $idNovidade): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT idMidia, caminhoArquivo, tipo, isCapa FROM Midia WHERE idEntidade = :idEntidade AND tipoEntidade = 'Novidade' ORDER BY isCapa DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idEntidade' => $idNovidade]);
+        $midias = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($midias as &$midia) {
+            if (!empty($midia['caminhoArquivo'])) {
+                $midia['caminhoArquivo'] = GoogleCloudStorageService::getSignedUrl($midia['caminhoArquivo']);
+            }
+        }
+        return $midias;
+    }
 
 }

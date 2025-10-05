@@ -127,6 +127,7 @@ class Roteador
                         if ($metodoHttp === "PUT") {
                             $input = file_get_contents('php://input');
                             $dadosPut = Utils::parse_multipart_form_data($input);
+                            $_POST = $dadosPut; // Manually populate $_POST
                             $dados = array_merge($dados, $dadosPut);
                         }
                     } else {

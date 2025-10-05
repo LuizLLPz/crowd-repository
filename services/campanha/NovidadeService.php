@@ -10,16 +10,38 @@ use models\social\Curtida;
 use modules\core\utils\File;
 use modules\db\Database;
 use services\integrations\SocketService;
+use services\core\MidiaService;
 
 class NovidadeService
 {
-    public static function criar_novidade(Novidade $novidade, int $idUsuario, ?array $imagemFile = null): string
+    private static function criarNotificacaoSeDiferente(Notificacao $notificacao, int $idCriador): void
+    {
+        if ($notificacao->idUsuario !== $idCriador) {
+            Notificacao::criar($notificacao);
+        }
+    }
+
+    public static function criar_novidade(Novidade $novidade, int $idUsuario): void
     {
         $pdo = Database::getConnection();
         $pdo->beginTransaction();
 
         try {
-            $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario, $imagemFile);
+            $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario);
+
+            if (!empty($_FILES)) {
+                $uploadedMidias = MidiaService::salvarMidia($_FILES, null, $novidadeCriada->id);
+                // Assuming the frontend sends a flag for which media is cover
+                // This part might need adjustment based on actual frontend implementation
+                foreach ($uploadedMidias as $midia) {
+                    // Example: if frontend sends 'isCover' flag for each file
+                    // if ($midia['isCover']) {
+                    //     MidiaService::definirCapa($midia['idMidia'], null, $novidadeCriada->id);
+                    //     break;
+                    // }
+                }
+            }
+
             $inscricoes = InscricaoCampanha::obterInscricoesCampanha($novidadeCriada->idCampanha);
 
             $notificacoesParaSocket = [];
@@ -35,8 +57,8 @@ class NovidadeService
                     $novaNotificacao->tipo = Notificacao::TIPO_NOVA_NOVIDADE;
                     $novaNotificacao->idItem = $novidade->idCampanha;
 
-                    $notificacaoSalva = Notificacao::criar($novaNotificacao);
-                    $notificacoesParaSocket[] = $notificacaoSalva;
+                    self::criarNotificacaoSeDiferente($novaNotificacao, $idUsuario);
+                    $notificacoesParaSocket[] = $novaNotificacao;
                 }
             }
 
@@ -46,15 +68,13 @@ class NovidadeService
                 SocketService::notificar($notificacoesParaSocket);
             }
 
-            return $novidadeCriada->imagem ?? "";
-
         } catch (\Exception $e) {
             $pdo->rollBack();
             throw $e;
         }
     }
 
-    public static function editar_novidade(Novidade $novidade, int $idUsuario, ?array $imagemFile = null): void
+    public static function editar_novidade(Novidade $novidade, int $idUsuario): void
     {
         $pdo = Database::getConnection();
         $pdo->beginTransaction();
@@ -66,24 +86,6 @@ class NovidadeService
             }
             if ($novidadeAntiga['idAutor'] !== $idUsuario) {
                 throw new \Exception("Você não tem permissão para editar esta novidade.");
-            }
-
-            if ($imagemFile && $imagemFile['error'] === UPLOAD_ERR_OK) {
-                if (!empty($novidadeAntiga['imagem'])) {
-                    File::delete($novidadeAntiga['imagem']);
-                }
-
-                $nomeArquivo = "campanha-{$novidade->idCampanha}-novidade-{$novidade->id}";
-                $resultadoUpload = File::salvarImagem($imagemFile, $nomeArquivo);
-                if ($resultadoUpload['success']) {
-                    $stmtImg = $pdo->prepare("UPDATE Novidade SET imagem = :imagem WHERE id = :id");
-                    $stmtImg->execute([
-                        ':imagem' => $resultadoUpload['filePath'],
-                        ':id' => $novidade->id
-                    ]);
-                } else {
-                    throw new \Exception("Falha no upload da nova imagem: " . $resultadoUpload['message']);
-                }
             }
 
             Novidade::editar_novidade($novidade);

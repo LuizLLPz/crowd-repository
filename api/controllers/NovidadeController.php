@@ -9,7 +9,9 @@ use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
 use modules\core\tipos\http\tipos\Link;
 use modules\core\tipos\LinkRel;
+use modules\core\utils\Http;
 use services\campanha\NovidadeService;
+use services\core\MidiaService;
 
 class NovidadeController extends ControllerBase
 {
@@ -32,18 +34,35 @@ class NovidadeController extends ControllerBase
     #[HttpPost('/novidade')]
     public function salvar(Novidade $novidade): void
     {
-        $imagemFile = isset($_FILES['imagem']) ? $_FILES['imagem'] : null;
-        $url = NovidadeService::criar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario, $imagemFile);
+        NovidadeService::criar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
+
+        try {
+            MidiaService::processarMidias($_FILES, [], $novidade->id, 'Novidade');
+        } catch (\Exception $e) {
+            Http::HttpResponse(400, $e->getMessage());
+            return;
+        }
+
+        $url = $_ENV['CORS_ORIGIN'] . '/novidade/' . $novidade->id;
         $link = new Link(LinkRel::SELF, $url, "Novidade criada");
         $links = array($link);
         echo json_encode(['message' => "Novidade criada com sucesso", '_links' => $links], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
-    #[HttpPost('/novidade/editar')]
+    #[HttpPut('/novidade')]
     public function editar(Novidade $novidade): void
     {
-        $imagemFile = isset($_FILES['imagem']) ? $_FILES['imagem'] : null;
-        NovidadeService::editar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario, $imagemFile);
+        NovidadeService::editar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
+
+        $mediaData = json_decode($_POST['mediaData'] ?? '[]', true);
+
+        try {
+            MidiaService::processarMidias($_FILES, $mediaData, $novidade->id, 'Novidade');
+        } catch (\Exception $e) {
+            Http::HttpResponse(400, $e->getMessage());
+            return;
+        }
+
         echo json_encode(['message' => "Novidade atualizada com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 

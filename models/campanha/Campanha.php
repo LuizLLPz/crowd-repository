@@ -20,7 +20,7 @@ class Campanha extends Entidade
     public int $idCategoria = 0;
     public string $categoria = "";
     public string $roadmap = '';
-    public string $caminhoImagem = '';
+    public array $midias = [];
     public int $metaArrecadacao = 0;
     public int $valorArrecadado = 0;
     public string $telefone = '';
@@ -37,6 +37,7 @@ class Campanha extends Entidade
         $pdo = Database::getConnection();
 
         $sql = "SELECT C.*, CA.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor,
+            (SELECT M.caminhoArquivo FROM Midia M WHERE M.idEntidade = C.idCampanha AND M.tipoEntidade = 'Campanha' AND M.tipo = 'imagem' ORDER BY M.isCapa DESC LIMIT 1) AS imagemCapa,
             (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias,
             IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = C.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,
             IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = C.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores
@@ -94,8 +95,8 @@ class Campanha extends Entidade
         $campanhas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($campanhas as &$campanha) {
-            if (!empty($campanha['caminhoImagem'])) {
-                $campanha['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoImagem']);
+            if (!empty($campanha['imagemCapa'])) {
+                $campanha['imagemCapa'] = GoogleCloudStorageService::getSignedUrl($campanha['imagemCapa']);
             }
             if (!empty($campanha['caminhoImagemAutor'])) {
                 error_log('Campanha::buscar_campanhas - caminhoImagemAutor before signing: ' . $campanha['caminhoImagemAutor']);
@@ -131,9 +132,7 @@ class Campanha extends Entidade
             }
         }
 
-        if (!empty($campanha->caminhoImagem)) {
-            $campanha->caminhoImagem = GoogleCloudStorageService::getSignedUrl($campanha->caminhoImagem);
-        }
+        $campanha->midias = self::buscar_midias_campanha($idCampanha);
 
         if ($idUsuario != null) {
             $campanha->denunciadoUsuario = Denuncia::buscarDenunciaUsuario($idUsuario, $idCampanha, TipoAlvo::CAMPANHA);
@@ -162,7 +161,6 @@ class Campanha extends Entidade
                     email, 
                     github, 
                     instagram,
-                    caminhoImagem,
                     status,
                     dataCriacao
                 ) VALUES (
@@ -171,13 +169,12 @@ class Campanha extends Entidade
                     :roadmap, 
                     :idCategoria, 
                     :metaArrecadacao, 
-                    :valorArrecadado, 
+                    0, 
                     :telefone, 
                     :linkedin, 
                     :email, 
                     :github, 
                     :instagram,
-                    :caminhoImagem,
                     3,     
                     now()
         )";
@@ -187,14 +184,12 @@ class Campanha extends Entidade
                 ':roadmap'          => $campanha->roadmap,
                 ':idCategoria'      => $campanha->idCategoria,
                 ':metaArrecadacao'  => $campanha->metaArrecadacao,
-                ':valorArrecadado'  => $campanha->valorArrecadado,
                 ':telefone'         => $campanha->telefone,
                 ':linkedin'         => $campanha->linkedin,
                 ':email'            => $campanha->email,
                 ':github'           => $campanha->github,
                 ':instagram'        => $campanha->instagram,
-                ':idUsuario'        => $campanha->idUsuario,
-                ':caminhoImagem'    => $campanha->caminhoImagem
+                ':idUsuario'        => $campanha->idUsuario
             ]);
             $campanha->idCampanha = $pdo->lastInsertId();
 
@@ -247,16 +242,6 @@ class Campanha extends Entidade
         ]);
     }
 
-    public static function alterar_caminhoImagem(int $idCampanha, string $caminhoImagem): void
-    {
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("UPDATE Campanha SET caminhoImagem = :caminhoImagem WHERE idCampanha = :idCampanha");
-        $stmt->execute([
-            ':caminhoImagem' => $caminhoImagem,
-            ':idCampanha' => $idCampanha
-        ]);
-    }
-
     public static function obter_Titulo(int $idCampanha): string {
         $pdo = Database::getConnection();
         $sql = "SELECT titulo FROM Campanha WHERE idCampanha = :idCampanha";
@@ -298,6 +283,22 @@ class Campanha extends Entidade
         }
 
         return $doadores;
+    }
+
+    public static function buscar_midias_campanha(int $idCampanha): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT idMidia, caminhoArquivo, tipo, isCapa FROM Midia WHERE idEntidade = :idEntidade AND tipoEntidade = 'Campanha' ORDER BY isCapa DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idEntidade' => $idCampanha]);
+        $midias = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($midias as &$midia) {
+            if (!empty($midia['caminhoArquivo'])) {
+                $midia['caminhoArquivo'] = GoogleCloudStorageService::getSignedUrl($midia['caminhoArquivo']);
+            }
+        }
+        return $midias;
     }
 
 }
