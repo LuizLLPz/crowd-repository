@@ -29,19 +29,6 @@ class NovidadeService
         try {
             $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario);
 
-            if (!empty($_FILES)) {
-                $uploadedMidias = MidiaService::salvarMidia($_FILES, null, $novidadeCriada->id);
-                // Assuming the frontend sends a flag for which media is cover
-                // This part might need adjustment based on actual frontend implementation
-                foreach ($uploadedMidias as $midia) {
-                    // Example: if frontend sends 'isCover' flag for each file
-                    // if ($midia['isCover']) {
-                    //     MidiaService::definirCapa($midia['idMidia'], null, $novidadeCriada->id);
-                    //     break;
-                    // }
-                }
-            }
-
             $inscricoes = InscricaoCampanha::obterInscricoesCampanha($novidadeCriada->idCampanha);
 
             $notificacoesParaSocket = [];
