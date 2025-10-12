@@ -15,7 +15,7 @@ class Doacao extends Entidade
     public string $stripeTransactionId = '';
     public string $status = '';
 
-    public static function criar(Doacao $doacao): void
+    public static function criar(Doacao $doacao): int
     {
         $pdo = Database::getConnection();
         $sql = "INSERT INTO Doacao (idCampanha, idUsuario, valor, stripeTransactionId, status, dataCriacao) VALUES (:idCampanha, :idUsuario, :valor, :stripeTransactionId, :status, NOW())";
@@ -27,5 +27,6 @@ class Doacao extends Entidade
             ':stripeTransactionId' => $doacao->stripeTransactionId,
             ':status' => $doacao->status
         ]);
+        return $pdo->lastInsertId();
     }
 }

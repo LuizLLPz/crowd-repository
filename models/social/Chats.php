@@ -23,7 +23,7 @@ class Chats extends Entidade
     public static function buscarChats(): array
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->query(new Chats()->select);
+        $stmt = $pdo->query("SELECT * FROM Chats");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -35,8 +35,10 @@ class Chats extends Entidade
                 c.idChat,
                 u1.idUsuario AS idUsuarioPrincipal,
                 u1.nomeUsuario AS nomeUsuarioPrincipal,
+                u1.urlFoto AS urlFotoUsuarioPrincipal,
                 u2.nomeUsuario AS nomeOutroParticipante,
                 u2.idUsuario AS idOutroParticipante,
+                u2.urlFoto AS urlFotoOutroParticipante,
                 c.criadoEm,
                 (
                     SELECT m.mensagem
@@ -74,6 +76,14 @@ class Chats extends Entidade
             ':idUsuario1' => $idUsuario,
             ':idUsuario2' => $idUsuario
         ]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    public static function buscarParticipantesDoChat(int $chatId): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT cu.usuarioId AS idUsuario FROM ChatsUsuarios cu WHERE cu.chatId = :chatId";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':chatId' => $chatId]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

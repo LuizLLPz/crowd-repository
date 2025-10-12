@@ -36,6 +36,26 @@ class Novidade extends Entidade
         $novidade = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         if ($novidade) {
+            if (!empty($novidade['descricao'])) {
+                $dom = new \DOMDocument();
+                @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $novidade['descricao']);
+                $images = $dom->getElementsByTagName('img');
+
+                foreach ($images as $img) {
+                    if ($img->hasAttribute('data-path')) {
+                        $path = $img->getAttribute('data-path');
+                        $newSignedUrl = GoogleCloudStorageService::getSignedUrl($path);
+                        $img->setAttribute('src', $newSignedUrl);
+                    }
+                }
+                $body = $dom->getElementsByTagName('body')->item(0);
+                $innerHtml = '';
+                foreach ($body->childNodes as $child) {
+                    $innerHtml .= $dom->saveHTML($child);
+                }
+                $novidade['descricao'] = $innerHtml;
+            }
+
             $novidade['midias'] = self::buscar_midias_novidade($idNovidade);
             if (!empty($novidade['caminhoFotoAutor'])) {
                 $novidade['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($novidade['caminhoFotoAutor']);
@@ -54,6 +74,26 @@ class Novidade extends Entidade
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($novidades as &$novidade) {
+            if (!empty($novidade['descricao'])) {
+                $dom = new \DOMDocument();
+                @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $novidade['descricao']);
+                $images = $dom->getElementsByTagName('img');
+
+                foreach ($images as $img) {
+                    if ($img->hasAttribute('data-path')) {
+                        $path = $img->getAttribute('data-path');
+                        $newSignedUrl = GoogleCloudStorageService::getSignedUrl($path);
+                        $img->setAttribute('src', $newSignedUrl);
+                    }
+                }
+                $body = $dom->getElementsByTagName('body')->item(0);
+                $innerHtml = '';
+                foreach ($body->childNodes as $child) {
+                    $innerHtml .= $dom->saveHTML($child);
+                }
+                $novidade['descricao'] = $innerHtml;
+            }
+
             $novidade['midias'] = self::buscar_midias_novidade($novidade['id']);
             if (!empty($novidade['caminhoFotoAutor'])) {
                 $novidade['caminhoFotoAutor'] = GoogleCloudStorageService::getSignedUrl($novidade['caminhoFotoAutor']);

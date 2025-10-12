@@ -95,6 +95,26 @@ class Campanha extends Entidade
         $campanhas = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         foreach ($campanhas as &$campanha) {
+            if (!empty($campanha['roadmap'])) {
+                $dom = new \DOMDocument();
+                @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $campanha['roadmap']);
+                $images = $dom->getElementsByTagName('img');
+
+                foreach ($images as $img) {
+                    if ($img->hasAttribute('data-path')) {
+                        $path = $img->getAttribute('data-path');
+                        $newSignedUrl = GoogleCloudStorageService::getSignedUrl($path);
+                        $img->setAttribute('src', $newSignedUrl);
+                    }
+                }
+                $body = $dom->getElementsByTagName('body')->item(0);
+                $innerHtml = '';
+                foreach ($body->childNodes as $child) {
+                    $innerHtml .= $dom->saveHTML($child);
+                }
+                $campanha['roadmap'] = $innerHtml;
+            }
+
             if (!empty($campanha['imagemCapa'])) {
                 $campanha['imagemCapa'] = GoogleCloudStorageService::getSignedUrl($campanha['imagemCapa']);
             }
@@ -110,13 +130,7 @@ class Campanha extends Entidade
 
     public static function obter_campanha(int $idCampanha, ?int $idUsuario = null): ?Campanha {
         $pdo = Database::getConnection();
-        $sql = "SELECT P.*, C.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor,
-                  IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,
-                  IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores
-                  FROM Campanha P
-               LEFT JOIN Categoria C ON C.id = P.idCategoria
-               LEFT JOIN Usuario U ON U.idUsuario = P.idUsuario
-               WHERE idCampanha = :idCampanha ";
+        $sql = "SELECT P.*, C.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor,\n                  IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,\n                  IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores\n                  FROM Campanha P\n               LEFT JOIN Categoria C ON C.id = P.idCategoria\n               LEFT JOIN Usuario U ON U.idUsuario = P.idUsuario\n               WHERE idCampanha = :idCampanha ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":idCampanha" => $idCampanha]);
         $campanhaData = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -130,6 +144,26 @@ class Campanha extends Entidade
             if (property_exists($campanha, $key)) {
                 $campanha->$key = $value;
             }
+        }
+
+        if (!empty($campanha->roadmap)) {
+            $dom = new \DOMDocument();
+            @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $campanha->roadmap);
+            $images = $dom->getElementsByTagName('img');
+
+            foreach ($images as $img) {
+                if ($img->hasAttribute('data-path')) {
+                    $path = $img->getAttribute('data-path');
+                    $newSignedUrl = GoogleCloudStorageService::getSignedUrl($path);
+                    $img->setAttribute('src', $newSignedUrl);
+                }
+            }
+            $body = $dom->getElementsByTagName('body')->item(0);
+            $innerHtml = '';
+            foreach ($body->childNodes as $child) {
+                $innerHtml .= $dom->saveHTML($child);
+            }
+            $campanha->roadmap = $innerHtml;
         }
 
         $campanha->midias = self::buscar_midias_campanha($idCampanha);

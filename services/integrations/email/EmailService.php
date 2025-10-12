@@ -2,42 +2,53 @@
 
 namespace services\integrations\email;
 
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\PHPMailer;
+use services\core\ConfigService;
+use services\integrations\email\provider\PHPMailerEmailProvider;
+use services\integrations\email\provider\SendGridEmailProvider;
+use services\integrations\email\provider\AmazonSESEmailProvider;
 
-class EmailService
+class EmailService implements EmailProviderInterface
 {
-    private PHPMailer $mail;
+    private EmailProviderInterface $provider;
 
     public function __construct()
     {
-        $this->mail = new PHPMailer(true);
+        $providerName = ConfigService::get('email', 'provider') ?? 'smtp'; // Default to smtp
 
-        $this->mail->isSMTP();
-        $this->mail->Host       = $_ENV['MAIL_HOST'];
-        $this->mail->SMTPAuth   = true;
-        $this->mail->Username   = $_ENV['MAIL_USERNAME'];
-        $this->mail->Password   = $_ENV['MAIL_PASSWORD'];
-        $this->mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'];
-        $this->mail->Port       = $_ENV['MAIL_PORT'];
-
-        $this->mail->setFrom($_ENV['MAIL_FROM_ADDRESS'], $_ENV['MAIL_FROM_NAME']);
-        $this->mail->isHTML(true);
+        if ($providerName === 'sendgrid') {
+            $config = ConfigService::getProviderConfig('sendgrid');
+            $providerConfig = [
+                'api_key' => $config['api_key'] ?? null,
+                'from_address' => $config['from_address'] ?? null,
+                'from_name' => $config['from_name'] ?? null,
+            ];
+            $this->provider = new SendGridEmailProvider($providerConfig);
+        } elseif ($providerName === 'ses') {
+            $config = ConfigService::getProviderConfig('ses');
+            $providerConfig = [
+                'aws_access_key_id' => $config['aws_access_key_id'] ?? null,
+                'aws_secret_access_key' => $config['aws_secret_access_key'] ?? null,
+                'aws_region' => $config['aws_region'] ?? null,
+                'from_address' => $config['from_address'] ?? null,
+            ];
+            $this->provider = new AmazonSESEmailProvider($providerConfig);
+        } else { // smtp
+            $config = ConfigService::getProviderConfig('smtp');
+            $providerConfig = [
+                'host' => $config['host'] ?? null,
+                'port' => $config['port'] ?? null,
+                'username' => $config['username'] ?? null,
+                'password' => $config['password'] ?? null,
+                'encryption' => $config['encryption'] ?? null,
+                'from_address' => $config['from_address'] ?? null,
+                'from_name' => $config['from_name'] ?? null,
+            ];
+            $this->provider = new PHPMailerEmailProvider($providerConfig);
+        }
     }
 
     public function enviar(string $destinatario, string $nomeDestinatario, string $assunto, string $mensagem): bool
     {
-        try {
-            $this->mail->clearAddresses();
-            $this->mail->addAddress($destinatario, $nomeDestinatario);
-            $this->mail->Subject = $assunto;
-            $this->mail->Body    = $mensagem;
-            $this->mail->AltBody = strip_tags($mensagem);
-
-            return $this->mail->send();
-        } catch (Exception $e) {
-            error_log("Erro ao enviar email: {$this->mail->ErrorInfo}");
-            return false;
-        }
+        return $this->provider->enviar($destinatario, $nomeDestinatario, $assunto, $mensagem);
     }
 }

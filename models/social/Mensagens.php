@@ -27,7 +27,7 @@ class Mensagens extends Entidade
     public static function buscarMensagens(): array
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->query(new Mensagens()->select);
+        $stmt = $pdo->query("SELECT * FROM Mensagens");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -36,13 +36,41 @@ class Mensagens extends Entidade
     {
         $pdo = Database::getConnection();
         $sql = "
-            SELECT * FROM Mensagens WHERE chatId = :idChat;
+            SELECT 
+                m.*, 
+                u.urlFoto, 
+                (SELECT 
+                    JSON_ARRAYAGG(
+                        JSON_OBJECT(
+                            'emoji', mr.emoji,
+                            'count', COUNT(mr.emoji),
+                            'usuarios', GROUP_CONCAT(us.nomeUsuario)
+                        )
+                    )
+                 FROM MensagemReacoes mr
+                 INNER JOIN Usuario us ON mr.usuarioId = us.idUsuario
+                 WHERE mr.mensagemId = m.idMensagem
+                 GROUP BY mr.emoji
+                ) as reacoes
+            FROM Mensagens m 
+            INNER JOIN Usuario u ON m.usuarioId = u.idUsuario
+            WHERE chatId = :idChat;
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idChat' => $idChat]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+
+    public static function buscarMensagemPorId(int $idMensagem): ?array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT * FROM Mensagens WHERE idMensagem = :idMensagem";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idMensagem' => $idMensagem]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
 
     public static function criarMensagem(int $idChat, int $idUsuario, string $mensagem): string
     {
@@ -60,7 +88,13 @@ class Mensagens extends Entidade
 
         $pdo->commit();
 
-        return "Mensagem enviada com sucesso!";
+        $idMensagem = $pdo->lastInsertId();
+
+        // Fetch the newly created message with user photo
+        $sql = "SELECT m.*, u.urlFoto FROM Mensagens m INNER JOIN Usuario u ON m.usuarioId = u.idUsuario WHERE m.idMensagem = :idMensagem";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idMensagem' => $idMensagem]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
 }

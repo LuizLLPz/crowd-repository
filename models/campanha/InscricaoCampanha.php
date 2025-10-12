@@ -72,4 +72,16 @@ class InscricaoCampanha extends Entidade
         return $result ? $result : [];
     }
 
+    public static function buscarInscritosPorCampanha(int $idCampanha): array
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT u.idUsuario, u.nomeUsuario, u.email
+                FROM InscricaoCampanha ic
+                JOIN Usuario u ON ic.idUsuario = u.idUsuario
+                WHERE ic.idCampanha = :idCampanha
+                  AND ic.status = 'ativa'";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idCampanha' => $idCampanha]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

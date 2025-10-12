@@ -10,6 +10,7 @@ class File
         array $fileData,
         ?string $fileName = null,
         int $maxFileSize = 5 * 1024 * 1024,
+        ?string $subfolder = null
     ): array {
         if (!isset($fileData['error']) || is_array($fileData['error'])) {
             return ['success' => false, 'message' => 'Parâmetros de arquivo inválidos.'];
@@ -98,7 +99,8 @@ class File
         }
 
         try {
-            $objectName = GoogleCloudStorageService::uploadFile($filePath, $newFileName);
+            $finalObjectName = $subfolder ? rtrim($subfolder, '/') . '/' . $newFileName : $newFileName;
+            $objectName = GoogleCloudStorageService::uploadFile($filePath, $finalObjectName);
 
             unlink($filePath);
 

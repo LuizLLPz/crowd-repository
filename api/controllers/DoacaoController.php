@@ -33,12 +33,10 @@ class DoacaoController extends ControllerBase
 
             $doacao->idUsuario = self::$usuarioAutenticado->idUsuario;
 
-            // Fetch Campanha to get owner's Stripe Account ID
             $campanha = Campanha::obter_campanha($doacao->idCampanha);
             if (!$campanha) {
                 Http::HttpResponse(404, "Campanha não encontrada.");
             }
-            // Convert array to object for type hinting
             $campanhaObj = new Campanha();
             foreach ($campanha as $key => $value) {
                 if (property_exists($campanhaObj, $key)) {

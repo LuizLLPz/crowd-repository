@@ -3,10 +3,9 @@ namespace services\campanha;
 
 use models\campanha\Campanha;
 use models\Campanha\HistoricoCampanha;
-use models\core\Notificacao;
+use services\core\NotificacaoService;
 use modules\core\utils\File;
 use modules\db\Database;
-use services\integrations\SocketService;
 use services\core\MidiaService;
 
 class CampanhaService
@@ -77,14 +76,19 @@ class CampanhaService
             $historico->descricao = "Campanha reprovada pelo administrador";
 
             $campanha = Campanha::obter_campanha($idCampanha);
-            $notificacao = new Notificacao();
-            $notificacao->idUsuario = $campanha['idUsuario'];
-            $notificacao->titulo = "Campanha Rerovada!";
-            $notificacao->descricao = "Sua campanha '{$campanha['titulo']}' foi reprovada :(";
-            $notificacao->tipo = "campanha_reprovada";
-            $notificacao->idItem = $idCampanha;
+            if ($campanha && $campanha->idUsuario != $idAprovador) {
+                $appUrl = getenv('APP_URL') ?: 'http://localhost:3000';
+                NotificacaoService::disparar(
+                    'campanha-reprovada',
+                    $campanha->idUsuario,
+                    [
+                        'idItem' => $idCampanha,
+                        'nomeCampanha' => $campanha->titulo,
+                        'linkCampanha' => "{$appUrl}/campanha/{$campanha->idCampanha}"
+                    ]
+                );
+            }
 
-            self::criarNotificacaoSeDiferente($notificacao, $idAprovador);
             HistoricoCampanha::salvarHistorico($historico);
             $pdo->commit();
 
@@ -113,14 +117,19 @@ class CampanhaService
             $historico->descricao = "Campanha aprovada pelo administrador";
 
             $campanha = Campanha::obter_campanha($idCampanha);
-            $notificacao = new Notificacao();
-            $notificacao->idUsuario = $campanha['idUsuario'];
-            $notificacao->titulo = "Campanha Aprovada!";
-            $notificacao->descricao = "Sua campanha '{$campanha['titulo']}' foi aprovada e já está visível para todos!";
-            $notificacao->tipo = "campanha_aprovada";
-            $notificacao->idItem = $idCampanha;
+            if ($campanha && $campanha->idUsuario != $idAprovador) {
+                $appUrl = getenv('APP_URL') ?: 'http://localhost:3000';
+                NotificacaoService::disparar(
+                    'campanha-aprovada',
+                    $campanha->idUsuario,
+                    [
+                        'idItem' => $idCampanha,
+                        'nomeCampanha' => $campanha->titulo,
+                        'linkCampanha' => "{$appUrl}/campanha/{$campanha->idCampanha}"
+                    ]
+                );
+            }
 
-            self::criarNotificacaoSeDiferente($notificacao, $idAprovador);
             HistoricoCampanha::salvarHistorico($historico);
             $pdo->commit();
 
@@ -149,14 +158,18 @@ class CampanhaService
             HistoricoCampanha::salvarHistorico($historico);
 
             $campanha = Campanha::obter_campanha($idCampanha);
-            $notificacao = new Notificacao();
-            $notificacao->idUsuario = $campanha['idUsuario'];
-            $notificacao->titulo = "Campanha Desativada!";
-            $notificacao->descricao = "Sua campanha '{$campanha['titulo']}' foi desativada pela moderação.";
-            $notificacao->tipo = "campanha_desativada";
-            $notificacao->idItem = $idCampanha;
-
-            self::criarNotificacaoSeDiferente($notificacao, $idAtendente);
+            if ($campanha && $campanha->idUsuario != $idAtendente) {
+                $appUrl = getenv('APP_URL') ?: 'http://localhost:3000';
+                NotificacaoService::disparar(
+                    'campanha-desativada',
+                    $campanha->idUsuario,
+                    [
+                        'idItem' => $idCampanha,
+                        'nomeCampanha' => $campanha->titulo,
+                        'linkCampanha' => "{$appUrl}/campanha/{$campanha->idCampanha}"
+                    ]
+                );
+            }
 
             if (!$hasTransaction) $pdo->commit();
 
@@ -165,14 +178,5 @@ class CampanhaService
             throw $e;
         }
     }
-
-    private static function criarNotificacaoSeDiferente(Notificacao $notificacao, int $idCriador): void
-    {
-        if ($notificacao->idUsuario !== $idCriador) {
-            Notificacao::criar($notificacao);
-            SocketService::notificar([$notificacao]);
-        }
-    }
-
 }
 

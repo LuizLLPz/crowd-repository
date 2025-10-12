@@ -26,7 +26,7 @@ class ChatsUsuarios extends Entidade
     public static function buscarChatsUsuarios(): array
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->query(new ChatsUsuarios()->select);
+        $stmt = $pdo->query("SELECT * FROM ChatsUsuarios");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

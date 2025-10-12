@@ -1,9 +1,18 @@
 <?php
 namespace modules\core\tipos\core\controllers;
 
+use modules\core\tipos\core\controllers\UsuarioAutenticado;
+
 class ControllerBase
 {
-    protected static ?UsuarioAutenticado $usuarioAutenticado = null;
+    public static ?\modules\sockets\ConnectionManager $connectionManager = null;
+
+    public static function setConnectionManager(\modules\sockets\ConnectionManager $manager): void
+    {
+        self::$connectionManager = $manager;
+    }
+
+    public static ?UsuarioAutenticado $usuarioAutenticado = null;
 
     public function __construct()
     {

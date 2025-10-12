@@ -6,8 +6,8 @@ use models\campanha\Doacao;
 
 class DoacaoService
 {
-    public static function criarDoacao(Doacao $doacao): void
+    public static function criarDoacao(Doacao $doacao): int
     {
-        Doacao::criar($doacao);
+        return Doacao::criar($doacao);
     }
 }

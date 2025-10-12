@@ -9,17 +9,12 @@ use models\core\Notificacao;
 use models\social\Curtida;
 use modules\core\utils\File;
 use modules\db\Database;
+use services\core\NotificacaoService;
 use services\integrations\SocketService;
 use services\core\MidiaService;
 
 class NovidadeService
 {
-    private static function criarNotificacaoSeDiferente(Notificacao $notificacao, int $idCriador): void
-    {
-        if ($notificacao->idUsuario !== $idCriador) {
-            Notificacao::criar($notificacao);
-        }
-    }
 
     public static function criar_novidade(Novidade $novidade, int $idUsuario): void
     {
@@ -29,31 +24,56 @@ class NovidadeService
         try {
             $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario);
 
-            $inscricoes = InscricaoCampanha::obterInscricoesCampanha($novidadeCriada->idCampanha);
+            $descricao = $novidade->descricao;
+            if (!empty($descricao)) {
+                $dom = new \DOMDocument();
+                @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $descricao);
+                $images = $dom->getElementsByTagName('img');
 
-            $notificacoesParaSocket = [];
+                $imagePaths = [];
+                foreach ($images as $img) {
+                    if ($img->hasAttribute('data-path')) {
+                        $imagePaths[] = $img->getAttribute('data-path');
+                    }
+                }
 
-            if (!empty($inscricoes)) {
+                if (!empty($imagePaths)) {
+                    $stmt = $pdo->prepare("INSERT INTO Midia (idEntidade, tipoEntidade, caminhoArquivo, tipo, isCapa) VALUES (:idEntidade, :tipoEntidade, :caminhoArquivo, 'imagem', 0)");
+                    foreach ($imagePaths as $path) {
+                        $stmt->execute([
+                            ':idEntidade' => $novidadeCriada->id,
+                            ':tipoEntidade' => 'Novidade',
+                            ':caminhoArquivo' => $path,
+                        ]);
+                    }
+                }
+            }
+
+            $inscritos = InscricaoCampanha::buscarInscritosPorCampanha($novidadeCriada->idCampanha);
+
+            if (!empty($inscritos)) {
                 $tituloCampanha = Campanha::obter_Titulo($novidadeCriada->idCampanha);
+                $appUrl = getenv('CORS_ORIGIN') ?: 'http://localhost:3000';
+                $linkNovidade = "{$appUrl}/campanha/{$novidadeCriada->idCampanha}?tab=novidades";
 
-                foreach ($inscricoes as $inscricao) {
-                    $novaNotificacao = new Notificacao();
-                    $novaNotificacao->idUsuario = $inscricao['idUsuario'];
-                    $novaNotificacao->titulo = "Nova atualização em " . $tituloCampanha;
-                    $novaNotificacao->descricao = $novidadeCriada->titulo;
-                    $novaNotificacao->tipo = Notificacao::TIPO_NOVA_NOVIDADE;
-                    $novaNotificacao->idItem = $novidade->idCampanha;
-
-                    self::criarNotificacaoSeDiferente($novaNotificacao, $idUsuario);
-                    $notificacoesParaSocket[] = $novaNotificacao;
+                foreach ($inscritos as $inscrito) {
+                    if ($inscrito['idUsuario'] != $idUsuario) {
+                        NotificacaoService::disparar(
+                            'nova-novidade-campanha',
+                            $inscrito['idUsuario'],
+                            [
+                                'idItem' => $novidadeCriada->idCampanha,
+                                'nomeCampanha' => $tituloCampanha,
+                                'tituloNovidade' => $novidadeCriada->titulo,
+                                'descricaoNovidade' => $novidadeCriada->descricao,
+                                'linkNovidade' => $linkNovidade,
+                            ]
+                        );
+                    }
                 }
             }
 
             $pdo->commit();
-
-            if (!empty($notificacoesParaSocket)) {
-                SocketService::notificar($notificacoesParaSocket);
-            }
 
         } catch (\Exception $e) {
             $pdo->rollBack();

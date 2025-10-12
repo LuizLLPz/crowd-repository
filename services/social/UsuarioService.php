@@ -6,7 +6,7 @@ use Firebase\JWT\JWT;
 use models\social\Usuario;
 use modules\core\utils\File;
 use modules\db\Database;
-use services\integrations\email\EmailService;
+use services\core\NotificacaoService;
 
 class UsuarioService {
     public static function salvar_usuario(Usuario $usuario): string {
@@ -16,9 +16,7 @@ class UsuarioService {
             $pdo->beginTransaction();
 
             $resp = Usuario::criar_usuario($usuario);
-            $emailService = new EmailService();
-            $emailService->enviar($usuario->email, $usuario->nomeUsuario, "Verificar conta crowd repository",
-                "O seu código de verificação é <b>{$usuario->codigoVerificacao}</b>");
+            self::enviarCodigoVerificacao($usuario);
 
             $payload = [
                 "idUsuario" => $usuario->idUsuario,
@@ -60,6 +58,24 @@ class UsuarioService {
         }
 
         return $resp;
+    }
+
+    public static function enviarCodigoVerificacao(Usuario $usuario): void
+    {
+        NotificacaoService::disparar(
+            'verificar-nova-conta',
+            $usuario->idUsuario,
+            ['codigoVerificacao' => $usuario->codigoVerificacao]
+        );
+    }
+
+    public static function enviarBoasVindas(Usuario $usuario): void
+    {
+        NotificacaoService::disparar(
+            'boas-vindas',
+            $usuario->idUsuario,
+            ['linkExplorar' => $_ENV['CORS_ORIGIN'] . '/home']
+        );
     }
 
     public static function editar_usuario(Usuario $usuario): string {

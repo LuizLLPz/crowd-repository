@@ -21,14 +21,27 @@ class MensagensController extends ControllerBase
     {
         $idChat = $_GET['idChat'];
         $resp = Mensagens::buscarMensagensDeUmChat($idChat);
+        foreach ($resp as &$mensagem) {
+            if (isset($mensagem['reacoes']) && is_string($mensagem['reacoes'])) {
+                $mensagem['reacoes'] = json_decode($mensagem['reacoes'], true);
+            }
+        }
         echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
     #[HttpPost('/enviarmensagem')]
     public function enviarMensagem(Mensagens $mensagem): void
     {
-        $url = Mensagens::criarMensagem($mensagem->chatId, ControllerBase::$usuarioAutenticado->idUsuario, $mensagem->mensagem);
-        echo json_encode(['message' => "Mensagem feita com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
+        $novaMensagem = Mensagens::criarMensagem($mensagem->chatId, ControllerBase::$usuarioAutenticado->idUsuario, $mensagem->mensagem);
+
+        // Broadcast the new message via the internal WebSocket API
+        $client = new \GuzzleHttp\Client();
+        $internalApiPort = $_ENV['SOCKET_INTERNAL_API_PORT'] ?? 8081;
+        $client->post("http://localhost:{$internalApiPort}/broadcast-chat-message", [
+            'json' => $novaMensagem
+        ]);
+
+        echo json_encode($novaMensagem, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 
 }

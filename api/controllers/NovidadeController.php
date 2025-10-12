@@ -41,7 +41,6 @@ class NovidadeController extends ControllerBase
             MidiaService::processarMidias($_FILES, [], $novidade->id, 'Novidade');
         } catch (\Exception $e) {
             Http::HttpResponse(400, $e->getMessage());
-            return;
         }
 
         $url = $_ENV['CORS_ORIGIN'] . '/novidade/' . $novidade->id;
@@ -61,7 +60,6 @@ class NovidadeController extends ControllerBase
             MidiaService::processarMidias($_FILES, $mediaData, $novidade->id, 'Novidade');
         } catch (\Exception $e) {
             Http::HttpResponse(400, $e->getMessage());
-            return;
         }
 
         echo json_encode(['message' => "Novidade atualizada com sucesso"], JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);

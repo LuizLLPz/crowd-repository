@@ -5,11 +5,6 @@ use DateTime;
 
 abstract class Entidade
 {
-    public string $select {
-        get {
-            return "SELECT * FROM {$this->nomeTabela} ";
-        }
-    }
     public abstract string $nomeTabela {
         get;
         set;

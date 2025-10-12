@@ -15,9 +15,21 @@ class MidiaService
     const MAX_IMAGES_CAMPAIGN = 4;
     const MAX_VIDEOS_CAMPAIGN = 1;
 
+    public static function salvarImagemMarkdown(array $file, int $idUsuario): array
+    {
+        $subfolder = 'markdown_images/' . $idUsuario . '/';
+        $resultadoUpload = File::salvarImagem($file, null, 5 * 1024 * 1024, $subfolder);
+
+        if ($resultadoUpload['success']) {
+            return ['path' => $resultadoUpload['filePath']];
+        } else {
+            throw new \Exception("Falha no upload da imagem para o markdown: " . $resultadoUpload['message']);
+        }
+    }
+
     public static function processarMidias(
         array $newFilesRaw,
-        array $existingMediaData, // [{idMidia: 1, isCover: true, isDeleted: false}, ...]
+        array $existingMediaData,
         int $idEntidade,
         string $tipoEntidade
     ): void {

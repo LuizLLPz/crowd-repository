@@ -77,7 +77,7 @@ class UsuarioController extends ControllerBase
     #[HttpPost('/verificarConta')]
     public function verificar_conta(Usuario $usuario): void
     {
-        $resultado = Usuario::buscar_usuario_por_id($usuario->idUsuario);
+        $resultado = Usuario::buscar_usuario($usuario->idUsuario);
         $agora = new \DateTime();
 
         if ($resultado->codigoVerificacao !== $usuario->codigoVerificacao) {
@@ -92,13 +92,11 @@ class UsuarioController extends ControllerBase
 
         Usuario::verificar_usuario($usuario->idUsuario);
 
-        $emailService = new EmailService();
-        $emailService->enviar(
-            $resultado->email,
-            $resultado->nomeUsuario,
-            "Verificar conta crowd repository",
-            "Conta verificada com sucesso! Aproveite o crowd repository!"
-        );
+        try {
+            UsuarioService::enviarBoasVindas($resultado);
+        } catch (\Exception $e) {
+            error_log("Falha ao enviar e-mail de boas-vindas: " . $e->getMessage());
+        }
 
         Http::HttpResponse(200, "Conta verificada com sucesso!");
     }
@@ -106,16 +104,10 @@ class UsuarioController extends ControllerBase
     #[HttpPost('/reenviarCodigo')]
     public function reenviar_codigo(Usuario $usuario): void
     {
-        $result = Usuario::buscar_usuario_por_id($usuario->idUsuario);
+        $result = Usuario::buscar_usuario($usuario->idUsuario);
         Usuario::gerar_novo_codigo($result);
 
-        $emailService = new EmailService();
-        $emailService->enviar(
-            $result->email,
-            $result->nomeUsuario,
-            "Verificar conta crowd repository",
-            "O seu código de verificação é <b>{$result->codigoVerificacao}</b>"
-        );
+        UsuarioService::enviarCodigoVerificacao($result);
 
         Http::HttpResponse(201, "Um código de verificação foi enviado para " . Utils::mascararEmail($result->email));
     }

@@ -21,7 +21,9 @@
     "stripe/stripe-php": "^14.1",
     "google/cloud-storage": "^1.48",
     "php-ffmpeg/php-ffmpeg": "^1.0",
-    "sendgrid/sendgrid": "^8.1"
+    "sendgrid/sendgrid": "^8.1",
+    "aws/aws-sdk-php": "^3.0",
+    "ext-openssl": "*"
   },
   "autoload": {
     "psr-4": {
