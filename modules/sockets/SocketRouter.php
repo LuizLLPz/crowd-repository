@@ -5,17 +5,13 @@ namespace modules\sockets;
 use Exception;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
-use modules\sockets\Handlers\CampanhaHandler;
-
 class SocketRouter implements MessageComponentInterface
 {
     private ConnectionManager $connectionManager;
-    private CampanhaHandler $campanhaHandler;
 
     public function __construct()
     {
         $this->connectionManager = ConnectionManager::getInstancia();
-        $this->campanhaHandler = new CampanhaHandler();
     }
 
     public function onOpen(ConnectionInterface $conn)
@@ -45,16 +41,6 @@ class SocketRouter implements MessageComponentInterface
             return;
         }
 
-        switch ($dados->type) {
-            case 'campanha_inscrever':
-                $this->campanhaHandler->onSubscribe($from, $dados->payload);
-                break;
-
-            default:
-                $hash = spl_object_hash($from);
-                echo "Tipo de mensagem desconhecido ('{$dados->type}') recebido da conexão {$hash}\n";
-                break;
-        }
     }
 
     public function onClose(ConnectionInterface $conn)
