@@ -3,10 +3,10 @@ namespace modules\core\roteamento;
 
 use DateTime;
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpDelete;
-use modules\core\tipos\Http\atributos\HttpGet;
-use modules\core\tipos\Http\atributos\HttpPost;
-use modules\core\tipos\Http\atributos\HttpPut;
+use modules\core\tipos\http\atributos\HttpDelete;
+use modules\core\tipos\http\atributos\HttpGet;
+use modules\core\tipos\http\atributos\HttpPost;
+use modules\core\tipos\http\atributos\HttpPut;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;

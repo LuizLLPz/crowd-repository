@@ -9,6 +9,9 @@ class GoogleCloudStorageService
     public static function uploadFile(string $localFilePath, string $destinationObjectName): string
     {
         try {
+            if (empty($_ENV['GCS_BUCKET_NAME'])) {
+                throw new \Exception('A variável de ambiente GCS_BUCKET_NAME não está definida.');
+            }
             $storage = new StorageClient();
             $bucketName = $_ENV['GCS_BUCKET_NAME'];
             $bucket = $storage->bucket($bucketName);
@@ -27,6 +30,9 @@ class GoogleCloudStorageService
     public static function getSignedUrl(string $objectName, int $expirationMinutes = 15): string
     {
         try {
+            if (empty($_ENV['GCS_BUCKET_NAME'])) {
+                throw new \Exception('A variável de ambiente GCS_BUCKET_NAME não está definida.');
+            }
             error_log('GoogleCloudStorageService::getSignedUrl - Object Name: ' . $objectName);
             $objectName = trim($objectName);
             $storage = new StorageClient();
@@ -51,6 +57,9 @@ class GoogleCloudStorageService
     public static function deleteFile(string $objectName): void
     {
         try {
+            if (empty($_ENV['GCS_BUCKET_NAME'])) {
+                throw new \Exception('A variável de ambiente GCS_BUCKET_NAME não está definida.');
+            }
             $storage = new StorageClient();
             $bucketName = $_ENV['GCS_BUCKET_NAME'];
             $bucket = $storage->bucket($bucketName);

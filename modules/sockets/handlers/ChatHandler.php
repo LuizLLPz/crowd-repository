@@ -24,22 +24,33 @@ class ChatHandler
         // For now, we'll focus on the broadcast part.
     }
 
-    public function broadcastNewMessage(array $messageData)
+    public function broadcastNewMessage(array $messageData, int $senderId)
     {
+        error_log("CHAT_HANDLER: Broadcasting nova mensagem: " . print_r($messageData, true));
         $chatId = $messageData['chatId'];
         $messageJson = json_encode([
             'type' => 'nova_mensagem_chat',
             'payload' => $messageData
         ]);
 
-        // Get all users in this chat
-        $chatParticipants = Chats::buscarParticipantesDoChat($chatId);
+        $chatParticipants = \models\social\Chats::buscarParticipantesDoChat($chatId);
+        error_log("CHAT_HANDLER: Participantes encontrados: " . print_r($chatParticipants, true));
 
         foreach ($chatParticipants as $participant) {
             $userId = $participant['idUsuario'];
+            if ($userId == $senderId) {
+                continue;
+            }
+
+            error_log("CHAT_HANDLER: Tentando enviar para Usuario ID: {$userId}");
             $connections = $this->connectionManager->getConnectionsByUserId($userId);
-            foreach ($connections as $conn) {
-                $conn->send($messageJson);
+            if ($connections) {
+                foreach ($connections as $conn) {
+                    $conn->send($messageJson);
+                    error_log("CHAT_HANDLER: Mensagem enviada para Usuario ID: {$userId}");
+                }
+            } else {
+                error_log("CHAT_HANDLER: Nenhuma conexão encontrada para Usuario ID: {$userId}");
             }
         }
     }
@@ -47,12 +58,9 @@ class ChatHandler
     public function broadcastReactionUpdate(array $reactionData)
     {
         $mensagemId = $reactionData['mensagemId'];
-        // Assuming we can get chatId from mensagemId, or it's passed in reactionData
-        // For simplicity, let's assume reactionData contains chatId
         $chatId = $reactionData['chatId'] ?? null;
 
         if (!$chatId) {
-            // If chatId is not directly available, we might need to fetch it from the Mensagens table
             $mensagem = \models\social\Mensagens::buscarMensagemPorId($mensagemId);
             if ($mensagem) {
                 $chatId = $mensagem['chatId'];
@@ -74,8 +82,10 @@ class ChatHandler
         foreach ($chatParticipants as $participant) {
             $userId = $participant['idUsuario'];
             $connections = $this->connectionManager->getConnectionsByUserId($userId);
-            foreach ($connections as $conn) {
-                $conn->send($reactionJson);
+            if ($connections) {
+                foreach ($connections as $conn) {
+                    $conn->send($reactionJson);
+                }
             }
         }
     }

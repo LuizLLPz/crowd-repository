@@ -38,27 +38,22 @@ class Mensagens extends Entidade
         $sql = "
             SELECT 
                 m.*, 
-                u.urlFoto, 
-                (SELECT 
-                    JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'emoji', mr.emoji,
-                            'count', COUNT(mr.emoji),
-                            'usuarios', GROUP_CONCAT(us.nomeUsuario)
-                        )
-                    )
-                 FROM MensagemReacoes mr
-                 INNER JOIN Usuario us ON mr.usuarioId = us.idUsuario
-                 WHERE mr.mensagemId = m.idMensagem
-                 GROUP BY mr.emoji
-                ) as reacoes
+                u.caminhoImagem as urlFoto
             FROM Mensagens m 
             INNER JOIN Usuario u ON m.usuarioId = u.idUsuario
-            WHERE chatId = :idChat;
+            WHERE m.chatId = :idChat
+            ORDER BY m.criadoEm ASC;
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idChat' => $idChat]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $mensagens = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($mensagens as &$mensagem) {
+            $reacoes = MensagemReacoes::buscarReacoesPorMensagem($mensagem['idMensagem']);
+            $mensagem['reacoes'] = $reacoes;
+        }
+
+        return $mensagens;
     }
 
 
@@ -72,10 +67,9 @@ class Mensagens extends Entidade
         return $result ?: null;
     }
 
-    public static function criarMensagem(int $idChat, int $idUsuario, string $mensagem): string
+    public static function criarMensagem(int $idChat, int $idUsuario, string $mensagem): array
     {
         $pdo = Database::getConnection();
-        $pdo->beginTransaction();
         $sql = "INSERT INTO Mensagens (chatId, usuarioId, mensagem) 
         VALUES (:chatId, :usuarioId, :mensagem)";
         $stmt = $pdo->prepare($sql);
@@ -86,15 +80,24 @@ class Mensagens extends Entidade
             ':mensagem' => $mensagem,
         ]);
 
-        $pdo->commit();
+        if ($stmt->rowCount() === 0) {
+            throw new \Exception("Falha ao inserir a mensagem no banco de dados. Erro: " . implode(" ", $stmt->errorInfo()));
+        }
 
         $idMensagem = $pdo->lastInsertId();
 
-        // Fetch the newly created message with user photo
-        $sql = "SELECT m.*, u.urlFoto FROM Mensagens m INNER JOIN Usuario u ON m.usuarioId = u.idUsuario WHERE m.idMensagem = :idMensagem";
+        error_log("Tentando recuperar mensagem recém-criada. ID: {$idMensagem}, UsuarioID: {$idUsuario}");
+
+        $sql = "SELECT m.*, u.caminhoImagem as urlFoto FROM Mensagens m INNER JOIN Usuario u ON m.usuarioId = u.idUsuario WHERE m.idMensagem = :idMensagem";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idMensagem' => $idMensagem]);
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$result) {
+            throw new \Exception("Falha ao recuperar a mensagem recém-criada.");
+        }
+
+        return $result;
     }
 
 }

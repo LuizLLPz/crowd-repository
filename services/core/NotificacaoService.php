@@ -34,6 +34,12 @@ class NotificacaoService
             $notificacao->tipo = $eventoCodigo;
             $notificacao->idItem = $dadosContexto['idItem'] ?? null;
 
+            switch ($eventoCodigo) {
+                case 'nova-mensagem':
+                    $notificacao->link = '/mensagens?chatId=' . $notificacao->idItem;
+                    break;
+            }
+
             $novaNotificacao = Notificacao::criar($notificacao);
 
             try {

@@ -28,4 +28,9 @@ class ControllerBase
         return ControllerBase::$usuarioAutenticado !== null;
     }
 
+    public function getBody(): object
+    {
+        return json_decode(file_get_contents('php://input'));
+    }
+
 }

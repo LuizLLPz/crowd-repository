@@ -133,10 +133,18 @@ class Usuario extends Entidade
     public static function buscar_usuarios_input(): array
     {
         $pdo = Database::getConnection();
-        $sql = "SELECT idUsuario, nomeUsuario, caminhoImagem, idCargo FROM Usuario";
+        $sql = "SELECT idUsuario, nomeUsuario, email, caminhoImagem, idCargo FROM Usuario";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $usuarios = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($usuarios as &$usuario) {
+            if (!empty($usuario['caminhoImagem'])) {
+                $usuario['caminhoImagem'] = GoogleCloudStorageService::getSignedUrl($usuario['caminhoImagem']);
+            }
+        }
+
+        return $usuarios;
     }
 
 

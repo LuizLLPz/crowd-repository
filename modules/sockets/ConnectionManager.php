@@ -33,23 +33,29 @@ class ConnectionManager
     public function associarUsuario(ConnectionInterface $conn, int $idUsuario): void
     {
         $conn->idUsuario = $idUsuario;
-        $this->usuarioParaConexao[$idUsuario] = $conn;
+        if (!isset($this->usuarioParaConexao[$idUsuario])) {
+            $this->usuarioParaConexao[$idUsuario] = [];
+        }
+        $this->usuarioParaConexao[$idUsuario][$conn->resourceId] = $conn;
         echo "Conexão {$conn->resourceId} autenticada com sucesso para o usuário {$idUsuario}\n";
     }
 
     public function removerConexao(ConnectionInterface $conn): void
     {
-        if (isset($conn->usuarioId) && isset($this->usuarioParaConexao[$conn->idUsuario])) {
-            unset($this->usuarioParaConexao[$conn->idUsuario]);
-            echo "Usuário {$conn->usuarioId} desconectado.\n";
+        if (isset($conn->idUsuario) && isset($this->usuarioParaConexao[$conn->idUsuario][$conn->resourceId])) {
+            unset($this->usuarioParaConexao[$conn->idUsuario][$conn->resourceId]);
+            if (empty($this->usuarioParaConexao[$conn->idUsuario])) {
+                unset($this->usuarioParaConexao[$conn->idUsuario]);
+                echo "Usuário {$conn->idUsuario} desconectado (todas as conexões fechadas).\n";
+            }
         }
 
         $this->conexoes->detach($conn);
         echo "Conexão {$conn->resourceId} fechada.\n";
     }
 
-    public function getConexaoPorUsuarioId(int $idUsuario): ?ConnectionInterface
+    public function getConnectionsByUserId(int $idUsuario): array
     {
-        return $this->usuarioParaConexao[$idUsuario] ?? null;
+        return $this->usuarioParaConexao[$idUsuario] ?? [];
     }
 }

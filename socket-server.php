@@ -9,6 +9,9 @@ use modules\sockets\SocketRouter;
 use modules\sockets\AuthMiddleware;
 use modules\sockets\ConnectionManager;
 use modules\sockets\handlers\ChatHandler;
+use React\Http\HttpServer as ReactHttpServer;
+use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 
 error_reporting(E_ALL & ~E_DEPRECATED);
 
@@ -38,8 +41,6 @@ echo "Servidor de WebSocket para clientes rodando na porta {$ws_port}\n";
 $internalApiServer = new ReactHttpServer(
     $server->loop,
     function (ServerRequestInterface $request) use ($connectionManager, $chatHandler) {
-        error_log("API INTERNA RECEBEU PAYLOAD: " . (string) $request->getBody());
-
         $path = $request->getUri()->getPath();
         $method = $request->getMethod();
 
@@ -49,8 +50,6 @@ $internalApiServer = new ReactHttpServer(
             if (empty($notificacoes) || !is_array($notificacoes)) {
                 return new Response(400, ['Content-Type' => 'text/plain'], 'Bad Request');
             }
-
-            $totalNotificadosOnline = 0;
 
             foreach ($notificacoes as $notificacao) {
                 $usuarioId = $notificacao['idUsuario'] ?? null;
@@ -62,22 +61,23 @@ $internalApiServer = new ReactHttpServer(
                             'payload' => $notificacao
                         ];
                         $conexao->send(json_encode($payloadParaFrontend));
-                        $totalNotificadosOnline++;
                     }
                 }
             }
 
-            return new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'ok', 'notificados_online' => $totalNotificadosOnline]));
+            return new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'ok']));
         } elseif ($method === 'POST' && $path === '/broadcast-chat-message') {
-            $messageData = json_decode((string) $request->getBody(), true);
+            $data = json_decode((string) $request->getBody(), true);
+            $messageData = $data['payload'];
+            $senderId = $data['remetenteId'];
 
-            if (empty($messageData) || !is_array($messageData)) {
+            if (empty($messageData) || !is_array($messageData) || !$senderId) {
                 return new Response(400, ['Content-Type' => 'text/plain'], 'Bad Request');
             }
 
-            $chatHandler->broadcastNewMessage($messageData);
+            $chatHandler->broadcastNewMessage($messageData, $senderId);
 
-            return new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'ok', 'message' => 'Chat message broadcasted']));
+            return new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'ok']));
         } elseif ($method === 'POST' && $path === '/broadcast-reaction-update') {
             $reactionData = json_decode((string) $request->getBody(), true);
 
@@ -87,7 +87,7 @@ $internalApiServer = new ReactHttpServer(
 
             $chatHandler->broadcastReactionUpdate($reactionData);
 
-            return new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'ok', 'message' => 'Chat reaction broadcasted']));
+            return new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'ok']));
         }
 
         return new Response(404, ['Content-Type' => 'text/plain'], 'Not Found');

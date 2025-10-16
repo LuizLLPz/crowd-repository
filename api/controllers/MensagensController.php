@@ -6,6 +6,7 @@ use models\social\Mensagens;
 use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\Http\atributos\HttpGet;
 use modules\core\tipos\Http\atributos\HttpPost;
+use services\social\MensagemService;
 
 class MensagensController extends ControllerBase
 {
@@ -32,15 +33,7 @@ class MensagensController extends ControllerBase
     #[HttpPost('/enviarmensagem')]
     public function enviarMensagem(Mensagens $mensagem): void
     {
-        $novaMensagem = Mensagens::criarMensagem($mensagem->chatId, ControllerBase::$usuarioAutenticado->idUsuario, $mensagem->mensagem);
-
-        // Broadcast the new message via the internal WebSocket API
-        $client = new \GuzzleHttp\Client();
-        $internalApiPort = $_ENV['SOCKET_INTERNAL_API_PORT'] ?? 8081;
-        $client->post("http://localhost:{$internalApiPort}/broadcast-chat-message", [
-            'json' => $novaMensagem
-        ]);
-
+        $novaMensagem = MensagemService::enviar_mensagem($mensagem->chatId, ControllerBase::$usuarioAutenticado->idUsuario, $mensagem->mensagem);
         echo json_encode($novaMensagem, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
     }
 

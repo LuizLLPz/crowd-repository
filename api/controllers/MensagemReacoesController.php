@@ -14,8 +14,7 @@ class MensagemReacoesController extends ControllerBase
     public function adicionarReacao(MensagemReacoes $reacao): void
     {
         if (MensagemReacoes::adicionarReacao($reacao->mensagemId, ControllerBase::$usuarioAutenticado->idUsuario, $reacao->emoji)) {
-            $usuarioNome = ControllerBase::$usuarioAutenticado->nomeUsuario; // Assuming nomeUsuario is available
-            // Broadcast the reaction update via the internal WebSocket API
+            $usuarioNome = ControllerBase::$usuarioAutenticado->nomeUsuario;
             $client = new \GuzzleHttp\Client();
             $internalApiPort = $_ENV['SOCKET_INTERNAL_API_PORT'] ?? 8081;
             $client->post("http://localhost:{$internalApiPort}/broadcast-reaction-update", [
@@ -38,11 +37,10 @@ class MensagemReacoesController extends ControllerBase
     public function removerReacao(MensagemReacoes $reacao): void
     {
         if (MensagemReacoes::removerReacao($reacao->mensagemId, ControllerBase::$usuarioAutenticado->idUsuario, $reacao->emoji)) {
-            $usuarioNome = ControllerBase::$usuarioAutenticado->nomeUsuario; // Assuming nomeUsuario is available
-            // Broadcast the reaction update via the internal WebSocket API
+            $usuarioNome = ControllerBase::$usuarioAutenticado->nomeUsuario;
             $client = new \GuzzleHttp\Client();
-            $internalApiPort = $_ENV['SOCKET_INTERNAL_API_PORT'] ?? 8081;
-            $client->post("http://localhost:{$internalApiPort}/broadcast-reaction-update", [
+            $internalApiPort = $_ENV['WEBSOCKET_PORT'] ?? 8080;
+            $client->post("http://localhost:{$internalApiPort}/api/broadcast-reaction-update", [
                 'json' => [
                     'mensagemId' => $reacao->mensagemId,
                     'usuarioId' => ControllerBase::$usuarioAutenticado->idUsuario,

@@ -1,5 +1,5 @@
 <?php
-namespace modules\core\tipos\Http\atributos;
+namespace modules\core\tipos\http\atributos;
 use Attribute;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
 
