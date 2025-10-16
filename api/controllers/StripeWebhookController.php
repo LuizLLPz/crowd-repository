@@ -6,7 +6,7 @@ use models\campanha\Campanha;
 use models\campanha\Doacao;
 use models\social\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpPost;
+use modules\core\tipos\http\atributos\HttpPost;
 use services\campanha\DoacaoService;
 use services\integrations\email\EmailService;
 use Stripe\Webhook;

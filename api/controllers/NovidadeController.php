@@ -4,10 +4,10 @@ namespace api\controllers;
 
 use models\campanha\Novidade;
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpDelete;
-use modules\core\tipos\Http\atributos\HttpGet;
-use modules\core\tipos\Http\atributos\HttpPost;
-use modules\core\tipos\Http\atributos\HttpPut;
+use modules\core\tipos\http\atributos\HttpDelete;
+use modules\core\tipos\http\atributos\HttpGet;
+use modules\core\tipos\http\atributos\HttpPost;
+use modules\core\tipos\http\atributos\HttpPut;
 use modules\core\tipos\http\tipos\Link;
 use modules\core\tipos\LinkRel;
 use modules\core\utils\Http;

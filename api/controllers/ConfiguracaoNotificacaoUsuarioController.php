@@ -3,8 +3,8 @@
 namespace api\controllers;
 
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpGet;
-use modules\core\tipos\Http\atributos\HttpPut;
+use modules\core\tipos\http\atributos\HttpGet;
+use modules\core\tipos\http\atributos\HttpPut;
 use modules\core\utils\Http;
 use services\core\ConfiguracaoNotificacaoUsuarioService;
 

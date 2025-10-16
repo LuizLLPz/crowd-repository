@@ -4,9 +4,9 @@ namespace api\controllers;
 
 use models\core\Excecao;
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpGet;
-use modules\core\tipos\Http\atributos\HttpPost;
-use modules\core\tipos\Http\atributos\HttpPut;
+use modules\core\tipos\http\atributos\HttpGet;
+use modules\core\tipos\http\atributos\HttpPost;
+use modules\core\tipos\http\atributos\HttpPut;
 use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Http;
 

@@ -4,7 +4,7 @@ namespace api\controllers;
 
 use models\social\ChatsUsuarios;
 use modules\core\tipos\core\controllers\ControllerBase;
-use modules\core\tipos\Http\atributos\HttpGet;
+use modules\core\tipos\http\atributos\HttpGet;
 
 class ChatsUsuariosController extends ControllerBase
 {
