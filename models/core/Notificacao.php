@@ -18,7 +18,7 @@ class Notificacao
     public string $tipo;
     public bool $lida = false;
     public ?string $link = null;
-    public int $idItem;
+    public ?int $idItem = null;
 
     public static function criar(Notificacao $notificacao): Notificacao
     {
