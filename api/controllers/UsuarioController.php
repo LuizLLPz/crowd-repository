@@ -15,6 +15,35 @@ use services\social\UsuarioService;
 class UsuarioController extends ControllerBase
 {
 
+    #[HttpPost('/usuario/stripe/onboarding')]
+    public function iniciarOnboardingStripe(): void
+    {
+        $usuario = Usuario::buscar_usuario(self::$usuarioAutenticado->idUsuario);
+
+        if (!$usuario->stripe_account_id) {
+            $account = \Stripe\Account::create([
+                'type' => 'express',
+                'email' => $usuario->email,
+                'capabilities' => [
+                    'card_payments' => ['requested' => true],
+                    'transfers' => ['requested' => true],
+                ],
+            ]);
+            $usuario->stripe_account_id = $account->id;
+            Usuario::atualizarStripeAccountId($usuario->idUsuario, $account->id);
+        }
+
+        $accountLink = \Stripe\AccountLink::create([
+            'account' => $usuario->stripe_account_id,
+            'refresh_url' => 'http://localhost:3000/perfil',
+            'return_url' => 'http://localhost:3000/perfil',
+            'type' => 'account_onboarding',
+        ]);
+
+        echo json_encode(['url' => $accountLink->url]);
+    }
+
+
     #[HttpGet('/usuario')]
     public function buscar_usuario(): void
     {

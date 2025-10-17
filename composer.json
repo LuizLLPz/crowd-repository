@@ -23,7 +23,8 @@
     "php-ffmpeg/php-ffmpeg": "^1.0",
     "sendgrid/sendgrid": "^8.1",
     "aws/aws-sdk-php": "^3.0",
-    "ext-openssl": "*"
+    "ext-openssl": "*",
+    "ext-gd": "*"
   },
   "autoload": {
     "psr-4": {

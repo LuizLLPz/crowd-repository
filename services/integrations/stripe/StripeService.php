@@ -44,7 +44,9 @@ class StripeService
     {
         Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
 
-        if (empty($campanha->stripe_account_id)) {
+        $donoCampanha = \models\social\Usuario::buscar_usuario($campanha->idUsuario);
+
+        if (empty($donoCampanha->stripe_account_id)) {
             throw new \Exception("O dono da campanha não configurou a conta Stripe para recebimentos.");
         }
 
@@ -75,7 +77,7 @@ class StripeService
             'payment_intent_data' => [
                 'application_fee_amount' => $platformFeeAmount,
                 'transfer_data' => [
-                    'destination' => $campanha->stripe_account_id,
+                    'destination' => $donoCampanha->stripe_account_id,
                 ],
             ],
             'metadata' => [
