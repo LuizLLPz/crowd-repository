@@ -54,13 +54,16 @@ $internalApiServer = new ReactHttpServer(
             foreach ($notificacoes as $notificacao) {
                 $usuarioId = $notificacao['idUsuario'] ?? null;
                 if ($usuarioId) {
-                    $conexao = $connectionManager->getConexaoPorUsuarioId($usuarioId);
-                    if ($conexao) {
+                    $conexoes = $connectionManager->getConnectionsByUserId($usuarioId);
+                    if (!empty($conexoes)) {
                         $payloadParaFrontend = [
                             'type'    => 'nova_notificacao',
                             'payload' => $notificacao
                         ];
-                        $conexao->send(json_encode($payloadParaFrontend));
+                        $payloadJson = json_encode($payloadParaFrontend);
+                        foreach ($conexoes as $conexao) {
+                            $conexao->send($payloadJson);
+                        }
                     }
                 }
             }
