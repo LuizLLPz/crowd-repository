@@ -3,13 +3,14 @@ namespace api\controllers;
 
 use models\core\Notificacao;
 use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\http\atributos\HttpDelete;
 use modules\core\tipos\http\atributos\HttpGet;
 use modules\core\tipos\http\atributos\HttpPost;
 use modules\core\utils\Http;
 
 
 class NotificacaoController extends ControllerBase {
-    #[HttpGet('/notificacoes')]
+    #[HttpGet('/notificacao')]
     public function listar(): void
     {
         $idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
@@ -42,6 +43,32 @@ class NotificacaoController extends ControllerBase {
          Notificacao::marcarTodasComoLidas($idUsuario);
 
         Http::HttpResponse(200, "Todas as notificações marcadas como lidas.");
+    }
+
+    #[HttpDelete('/notificacao')]
+    public function remover(): void
+    {
+        $idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $idNotificacao = $_GET['idNotificacao'] ?? null;
+
+        if (!is_numeric($idNotificacao)) {
+            Http::HttpResponse(400, "ID da notificação é inválido.");
+            return;
+        }
+
+        $pdo = \modules\db\Database::getConnection();
+        $sql = "DELETE FROM Notificacao WHERE idNotificacao = :idNotificacao AND idUsuario = :idUsuario";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idNotificacao' => (int)$idNotificacao,
+            ':idUsuario' => $idUsuario
+        ]);
+
+        if ($stmt->rowCount() > 0) {
+            Http::HttpResponse(200, "Notificação removida com sucesso.");
+        } else {
+            Http::HttpResponse(404, "Notificação não encontrada ou você não tem permissão para removê-la.");
+        }
     }
 
 }

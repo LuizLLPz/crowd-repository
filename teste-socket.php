@@ -2,6 +2,10 @@
 require __DIR__ . '/vendor/autoload.php';
 
 use GuzzleHttp\Client;
+use models\core\Notificacao;
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
 echo "=======================================\n";
 echo "INICIANDO TESTE DA PONTE DE SOCKET\n";
@@ -9,15 +13,34 @@ echo "=======================================\n\n";
 
 $url = 'http://127.0.0.1:8081/notify';
 
+// 1. Criar uma notificação real no banco
+$novaNotificacao = new Notificacao();
+$novaNotificacao->idUsuario = 40; // ID de um usuário de teste existente
+$novaNotificacao->titulo = 'TESTE DE SOCKET REAL';
+$novaNotificacao->descricao = 'Testando o envio de uma notificação persistida!';
+$novaNotificacao->tipo = 'teste_real';
+
+try {
+    $notificacaoCriada = Notificacao::criar($novaNotificacao);
+    echo "Notificação real criada no banco com ID: {$notificacaoCriada->idNotificacao}\n";
+} catch (\Throwable $e) {
+    echo "\n---------------------------------------\n";
+    echo "❌ FALHA AO CRIAR NOTIFICAÇÃO NO BANCO!\n";
+    echo "---------------------------------------\n";
+    echo "Motivo: " . $e->getMessage() . "\n";
+    exit;
+}
+
+// 2. Enviar a notificação real via socket
 $payloadDeTeste = [
     [
-        'idNotificacao' => 999,
-        'idUsuario' => 40,
-        'titulo' => 'TESTE DE SOCKET',
-        'descricao' => 'Testando socket!',
-        'tipoNotificacao' => 'teste',
+        'idNotificacao' => $notificacaoCriada->idNotificacao,
+        'idUsuario' => $notificacaoCriada->idUsuario,
+        'titulo' => $notificacaoCriada->titulo,
+        'descricao' => $notificacaoCriada->descricao,
+        'tipoNotificacao' => $notificacaoCriada->tipo,
         'lido' => false,
-        'idItem' => 123
+        'idItem' => null
     ]
 ];
 
@@ -38,7 +61,7 @@ try {
 
 } catch (\Throwable $e) {
     echo "\n---------------------------------------\n";
-    echo "❌ FALHA NA COMUNICACAO!\n";
+    echo "❌ FALHA NA COMUNICACAO COM SOCKET!\n";
     echo "---------------------------------------\n";
     echo "Motivo: " . $e->getMessage() . "\n";
 }

@@ -67,15 +67,6 @@ class UsuarioController extends ControllerBase
     }
 
 
-    #[HttpGet('/buscausuarioid')]
-    public function buscar_usuarios_por_id(): void
-    {
-        $idUsuario = $_GET['idUsuario'];
-        $resp = Usuario::buscar_usuario_por_id($idUsuario);
-        echo json_encode($resp, JSON_UNESCAPED_UNICODE, JSON_PRETTY_PRINT);
-    }
-
-
     #[HttpPost('/usuario', auth: false)]
     public function salvar(Usuario $usuario): void
     {

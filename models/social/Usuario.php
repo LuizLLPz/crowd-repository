@@ -148,17 +148,26 @@ class Usuario extends Entidade
     }
 
 
-    public static function buscar_usuario_por_id(string $idUsuario): array
+
+
+    public static function buscar_usuario_por_stripe_account_id(string $stripeAccountId): Usuario|false
     {
         $pdo = Database::getConnection();
-        $sql = "SELECT u.idUsuario, u.nomeUsuario, u.caminhoImagem, CASE WHEN u.idCargo = 0 OR u.idCargo IS NULL THEN 'Não informado' ELSE c.titulo END AS cargo, u.telefone, u.linkedin, u.github, u.instagram, u.descricao FROM Usuario u LEFT JOIN Cargo c ON u.idCargo = c.id WHERE TRIM(u.idUsuario) = :idUsuario";
+        $sql = "SELECT * FROM Usuario WHERE stripe_account_id = :stripe_account_id";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':idUsuario' => $idUsuario
-        ]);
+        $stmt->execute([':stripe_account_id' => $stripeAccountId]);
+        $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
-        return $usuario;
 
+        if ($usuario && !empty($usuario->caminhoImagem)) {
+            $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
+        }
+
+        if ($usuario && is_string($usuario->funcao)) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
+        }
+
+        return $usuario;
     }
 
     public static function criar_usuario(Usuario $usuario): string
@@ -267,6 +276,30 @@ class Usuario extends Entidade
         }
         return $usuario;
 
+    }
+
+    public static function atualizarStripeAccountStatus(
+        int $idUsuario,
+        bool $detailsSubmitted,
+        bool $chargesEnabled,
+        bool $payoutsEnabled,
+        string $requirementsDue
+    ): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Usuario SET 
+            stripe_details_submitted = :details_submitted,
+            stripe_charges_enabled = :charges_enabled,
+            stripe_payouts_enabled = :payouts_enabled,
+            stripe_requirements_due = :requirements_due
+            WHERE idUsuario = :idUsuario");
+        $stmt->execute([
+            ':details_submitted' => $detailsSubmitted ? 1 : 0,
+            ':charges_enabled' => $chargesEnabled ? 1 : 0,
+            ':payouts_enabled' => $payoutsEnabled ? 1 : 0,
+            ':requirements_due' => $requirementsDue,
+            ':idUsuario' => $idUsuario
+        ]);
     }
 
     public static function gerar_novo_codigo(Usuario $usuario): bool

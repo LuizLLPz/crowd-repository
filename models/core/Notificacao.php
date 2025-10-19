@@ -23,8 +23,8 @@ class Notificacao
     public static function criar(Notificacao $notificacao): Notificacao
     {
         $pdo = Database::getConnection();
-        $sql = "INSERT INTO Notificacao (idUsuario, titulo, descricao, tipo, lida, idItem, link, dataCriacao) 
-                VALUES (:idUsuario, :titulo, :descricao, :tipo, :lida, :idItem, :link, NOW())";
+        $sql = "INSERT INTO Notificacao (idUsuario, titulo, descricao, tipo, lida, idItem, dataCriacao) 
+                VALUES (:idUsuario, :titulo, :descricao, :tipo, :lida, :idItem, NOW())";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -33,8 +33,7 @@ class Notificacao
             ':descricao' => $notificacao->descricao,
             ':tipo' => $notificacao->tipo,
             ':lida' => (int)$notificacao->lida,
-            ':idItem' => $notificacao->idItem,
-            ':link' => $notificacao->link
+            ':idItem' => $notificacao->idItem
         ]);
 
         $notificacao->idNotificacao = $pdo->lastInsertId();

@@ -4,16 +4,18 @@ namespace api\controllers;
 
 use models\social\Usuario;
 use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\http\atributos\HttpGet;
 use modules\core\tipos\http\atributos\HttpPost;
 use modules\core\utils\Http;
 use services\integrations\stripe\StripeService;
+use Stripe\Stripe;
 
 class StripeController extends ControllerBase
 {
     #[HttpPost('/usuario/stripe/onboarding')]
     public function onboarding(): void
     {
-        $usuario = Usuario::buscar_usuario_por_id(ControllerBase::$usuarioAutenticado->idUsuario);
+        $usuario = Usuario::buscar_usuario(ControllerBase::$usuarioAutenticado->idUsuario);
 
         if (!$usuario || !$usuario->idUsuario) {
             Http::HttpResponse(401, "Usuário não autenticado.");
@@ -26,7 +28,6 @@ class StripeController extends ControllerBase
                 Usuario::atualizarStripeAccountId($usuario->idUsuario, $account->id);
             }
 
-            // 2. Generate Account Link
             $refreshUrl = $_ENV['CORS_ORIGIN'] . '/perfil/recebimentos?reauth=true';
             $returnUrl = $_ENV['CORS_ORIGIN'] . '/perfil/recebimentos?success=true';
 
@@ -39,8 +40,31 @@ class StripeController extends ControllerBase
             Http::HttpResponse(200, "Link de onboarding gerado com sucesso.", ['url' => $accountLink->url]);
 
         } catch (
-Exception $e) {
+        \Exception $e) {
             Http::HttpResponse(500, "Erro ao iniciar onboarding Stripe: " . $e->getMessage());
+        }
+    }
+
+    #[HttpGet('/usuario/stripe/balance')]
+    public function getBalance(): void
+    {
+        $usuario = Usuario::buscar_usuario(ControllerBase::$usuarioAutenticado->idUsuario);
+
+        if (!$usuario || !$usuario->idUsuario || empty($usuario->stripe_account_id)) {
+            Http::HttpResponse(400, "Usuário não possui conta Stripe conectada.");
+            return;
+        }
+
+        try {
+            Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
+
+            $balance = \Stripe\Balance::retrieve([
+                'stripe_account' => $usuario->stripe_account_id,
+            ]);
+
+            Http::HttpResponse(200, "Saldo recuperado com sucesso.", $balance);
+        } catch (\Exception $e) {
+            Http::HttpResponse(500, "Erro ao buscar saldo no Stripe: " . $e->getMessage());
         }
     }
 }

@@ -27,10 +27,21 @@ class ExcecaoController extends ControllerBase
         Http::HttpResponse(200, "Exceções encontradas", $excecoes);
     }
 
-    #[HttpPut('/excecao/{id}/status', auth: true, funcaoUsuario: FuncaoUsuario::ADMIN)]
-    public function atualizarStatus(int $id, Excecao $body): void
+    #[HttpPost('/excecao/agrupar', auth: true, funcaoUsuario: FuncaoUsuario::ADMIN)]
+    public function agruparEFinalizar(): void
     {
-        Excecao::updateStatus($id, $body->status);
+        $ids = json_decode(file_get_contents('php://input'), true)['ids'];
+        Excecao::agrupar($ids);
+        Http::HttpResponse(200, "Exceções agrupadas com sucesso!");
+    }
+
+    #[HttpPut('/excecao/status', auth: true, funcaoUsuario: FuncaoUsuario::ADMIN)]
+    public function atualizarStatus(): void
+    {
+        $id = $_GET['idExcecao'];
+        $status = $_GET['status'];
+        $justificativa = $_GET['justificativa'] ?? null;
+        Excecao::updateStatus($id, $status, $justificativa);
         Http::HttpResponse(200, "Status da exceção atualizado com sucesso!");
     }
 }

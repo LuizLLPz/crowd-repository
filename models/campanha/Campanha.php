@@ -32,19 +32,13 @@ class Campanha extends Entidade
     public bool $inscritoUsuario;
     public string $nomeAutor;
     public string $caminhoFotoAutor;
+    public bool $ownerStripeChargesEnabled;
+    public bool $isPrivada = false;
     public int $qtdDenuncias;
     public static function buscar_campanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null, ?int $filtroAdministrador = null, ?int $idUsuarioApoiador = null): array {
         $pdo = Database::getConnection();
 
-        $sql = "SELECT C.*, CA.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor,
-            (SELECT M.caminhoArquivo FROM Midia M WHERE M.idEntidade = C.idCampanha AND M.tipoEntidade = 'Campanha' AND M.tipo = 'imagem' ORDER BY M.isCapa DESC LIMIT 1) AS imagemCapa,
-            (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias,
-            IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = C.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,
-            IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = C.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores
-            FROM Campanha C 
-            LEFT JOIN Categoria CA ON CA.id = C.idCategoria 
-            LEFT JOIN Usuario U ON U.idUsuario = C.idUsuario
-            ";
+        $sql = "SELECT C.*, C.isPrivada, CA.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor, U.stripe_charges_enabled AS ownerStripeChargesEnabled,\n            (SELECT M.caminhoArquivo FROM Midia M WHERE M.idEntidade = C.idCampanha AND M.tipoEntidade = 'Campanha' AND M.tipo = 'imagem' ORDER BY M.isCapa DESC LIMIT 1) AS imagemCapa,\n            (SELECT COUNT(*) FROM Denuncia D WHERE D.idAlvo = C.idCampanha and tipoAlvo = 'Campanha') AS qtdDenuncias,\n            IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = C.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,\n            IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = C.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores\n            FROM Campanha C \n            LEFT JOIN Categoria CA ON CA.id = C.idCategoria \n            LEFT JOIN Usuario U ON U.idUsuario = C.idUsuario\n            ";
 
         $where = [];
         $params = [];
@@ -130,7 +124,7 @@ class Campanha extends Entidade
 
     public static function obter_campanha(int $idCampanha, ?int $idUsuario = null): ?Campanha {
         $pdo = Database::getConnection();
-        $sql = "SELECT P.*, C.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor,\n                  IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,\n                  IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores\n                  FROM Campanha P\n               LEFT JOIN Categoria C ON C.id = P.idCategoria\n               LEFT JOIN Usuario U ON U.idUsuario = P.idUsuario\n               WHERE idCampanha = :idCampanha ";
+        $sql = "SELECT P.*, P.isPrivada, C.titulo AS categoria, U.nomeUsuario AS nomeAutor, U.caminhoImagem AS caminhoImagemAutor, U.stripe_charges_enabled AS ownerStripeChargesEnabled,\n                  IFNULL((SELECT SUM(D.valor) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS valorArrecadado,\n                  IFNULL((SELECT COUNT(DISTINCT D.idUsuario) FROM Doacao D WHERE D.idCampanha = P.idCampanha AND D.status = 'completed'), 0) AS qtdApoiadores\n                  FROM Campanha P\n               LEFT JOIN Categoria C ON C.id = P.idCategoria\n               LEFT JOIN Usuario U ON U.idUsuario = P.idUsuario\n               WHERE idCampanha = :idCampanha ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([":idCampanha" => $idCampanha]);
         $campanhaData = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -144,6 +138,15 @@ class Campanha extends Entidade
             if (property_exists($campanha, $key)) {
                 $campanha->$key = $value;
             }
+        }
+
+        // Privacy check
+        if ($campanha->isPrivada && $idUsuario !== null) {
+            if (!self::isUsuarioParticipante($idCampanha, $idUsuario)) {
+                return null; // Not found for non-participants
+            }
+        } else if ($campanha->isPrivada && $idUsuario === null) {
+            return null; // Not found for unauthenticated users
         }
 
         if (!empty($campanha->roadmap)) {
@@ -194,38 +197,40 @@ class Campanha extends Entidade
                     linkedin, 
                     email, 
                     github, 
-                    instagram,
-                    status,
-                    dataCriacao
-                ) VALUES (
-                    :idUsuario,
-                    :titulo, 
-                    :roadmap, 
-                    :idCategoria, 
-                    :metaArrecadacao, 
-                    0, 
-                    :telefone, 
-                    :linkedin, 
-                    :email, 
-                    :github, 
-                    :instagram,
-                    3,     
-                    now()
-        )";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':titulo'           => $campanha->titulo,
-                ':roadmap'          => $campanha->roadmap,
-                ':idCategoria'      => $campanha->idCategoria,
-                ':metaArrecadacao'  => $campanha->metaArrecadacao,
-                ':telefone'         => $campanha->telefone,
-                ':linkedin'         => $campanha->linkedin,
-                ':email'            => $campanha->email,
-                ':github'           => $campanha->github,
-                ':instagram'        => $campanha->instagram,
-                ':idUsuario'        => $campanha->idUsuario
-            ]);
-            $campanha->idCampanha = $pdo->lastInsertId();
+                                        instagram,
+                                        status,
+                                        isPrivada,
+                                        dataCriacao
+                                    ) VALUES (
+                                        :idUsuario,
+                                        :titulo,
+                                        :roadmap,
+                                        :idCategoria,
+                                        :metaArrecadacao,
+                                        0,
+                                        :telefone,
+                                        :linkedin,
+                                        :email,
+                                        :github,
+                                        :instagram,
+                                        3,
+                                        :isPrivada,
+                                        now()
+                            )";
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([
+                                    ':titulo'           => $campanha->titulo,
+                                    ':roadmap'          => $campanha->roadmap,
+                                    ':idCategoria'      => $campanha->idCategoria,
+                                    ':metaArrecadacao'  => $campanha->metaArrecadacao,
+                                    ':telefone'         => $campanha->telefone,
+                                    ':linkedin'         => $campanha->linkedin,
+                                    ':email'            => $campanha->email,
+                                    ':github'           => $campanha->github,
+                                    ':instagram'        => $campanha->instagram,
+                                    ':idUsuario'        => $campanha->idUsuario,
+                                    ':isPrivada'        => $campanha->isPrivada
+                                ]);            $campanha->idCampanha = $pdo->lastInsertId();
 
         } catch (\Exception $e) {
             throw $e;
@@ -236,6 +241,12 @@ class Campanha extends Entidade
     {
         $pdo = Database::getConnection();
         try {
+            // Fetch current campaign data to check valorArrecadado
+            $currentCampanha = self::obter_campanha($campanha->idCampanha);
+            if ($currentCampanha && $currentCampanha->valorArrecadado > 0 && $campanha->isPrivada) {
+                throw new \Exception("Não é possível tornar a campanha privada após receber doações.");
+            }
+
             $sql = "UPDATE Campanha SET 
                         titulo = :titulo,
                         roadmap = :roadmap,
@@ -245,7 +256,8 @@ class Campanha extends Entidade
                         email = :email,
                         linkedin = :linkedin,
                         github = :github,
-                        instagram = :instagram
+                        instagram = :instagram,
+                        isPrivada = :isPrivada
                     WHERE idCampanha = :idCampanha";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
@@ -258,6 +270,7 @@ class Campanha extends Entidade
                 ':linkedin' => $campanha->linkedin,
                 ':github' => $campanha->github,
                 ':instagram' => $campanha->instagram,
+                ':isPrivada' => $campanha->isPrivada,
                 ':idCampanha' => $campanha->idCampanha
             ]);
             return "Campanha atualizada com sucesso!";
@@ -291,6 +304,26 @@ class Campanha extends Entidade
         $stmt->execute([':idCampanha' => $idCampanha]);
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
         return $result ? $result['idUsuario'] : null;
+    }
+
+    public static function isUsuarioParticipante(int $idCampanha, int $idUsuario): bool
+    {
+        $pdo = Database::getConnection();
+
+        // Check if the user is the owner of the campaign
+        $ownerId = self::obter_idUsuario($idCampanha);
+        if ($ownerId === $idUsuario) {
+            return true;
+        }
+
+        // Check if the user is an involved member (equipe)
+        $sql = "SELECT COUNT(*) FROM Envolvido WHERE idCampanha = :idCampanha AND idUsuario = :idUsuario";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idCampanha' => $idCampanha,
+            ':idUsuario' => $idUsuario
+        ]);
+        return $stmt->fetchColumn() > 0;
     }
 
     public static function obter_apoiadores(int $idCampanha): array

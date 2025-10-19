@@ -13,12 +13,10 @@ class StripeService
 {
     public function __construct()
     {
-        Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
     }
 
     public static function createAccount(string $email): Account
     {
-        Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
         return Account::create([
             'type' => 'express',
             'email' => $email,
@@ -31,7 +29,6 @@ class StripeService
 
     public static function createAccountLink(string $accountId, string $refreshUrl, string $returnUrl): AccountLink
     {
-        Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
         return AccountLink::create([
             'account' => $accountId,
             'refresh_url' => $refreshUrl,
@@ -42,8 +39,6 @@ class StripeService
 
     public static function createCheckoutSession(Doacao $doacao, Campanha $campanha): Session
     {
-        Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
-
         $donoCampanha = \models\social\Usuario::buscar_usuario($campanha->idUsuario);
 
         if (empty($donoCampanha->stripe_account_id)) {

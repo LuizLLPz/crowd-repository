@@ -5,10 +5,12 @@ namespace api\controllers;
 use models\campanha\Doacao;
 use models\campanha\Campanha;
 use modules\core\tipos\core\controllers\ControllerBase;
+use modules\core\tipos\http\atributos\HttpGet;
 use modules\core\tipos\http\atributos\HttpPost;
 use modules\core\utils\Http;
 use services\campanha\DoacaoService;
 use services\integrations\stripe\StripeService;
+use Stripe\Checkout\Session;
 
 class DoacaoController extends ControllerBase
 {
@@ -49,6 +51,37 @@ class DoacaoController extends ControllerBase
             Http::HttpResponse(200, "Sessão de checkout criada com sucesso", ['sessionId' => $checkoutSession->id]);
         } catch (\Exception $e) {
             Http::HttpResponse(500, "Erro ao criar a sessão de checkout: " . $e->getMessage());
+        }
+    }
+
+    #[HttpGet('/doacao/detalhes-checkout')]
+    public function getCheckoutDetails(): void
+    {
+        $sessionId = $_GET['session_id'] ?? null;
+
+        if (!$sessionId) {
+            Http::HttpResponse(400, "ID da sessão não fornecido.");
+            return;
+        }
+
+        try {
+            $session = Session::retrieve($sessionId, [
+                'expand' => ['payment_intent', 'line_items.data.price.product']
+            ]);
+
+            $lineItem = $session->line_items->data[0] ?? null;
+
+            $details = [
+                'idCampanha' => $session->metadata->idCampanha,
+                'nomeCampanha' => $lineItem ? $lineItem->price->product->name : 'N/A',
+                'valorTotal' => $session->amount_total,
+                'moeda' => $session->currency,
+                'stripeTransactionId' => is_string($session->payment_intent) ? $session->payment_intent : $session->payment_intent->id,
+            ];
+
+            Http::HttpResponse(200, "Detalhes da doação recuperados com sucesso.", $details);
+        } catch (\Exception $e) {
+            Http::HttpResponse(500, "Erro ao buscar detalhes da sessão de checkout: " . $e->getMessage());
         }
     }
 

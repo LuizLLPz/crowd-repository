@@ -22,6 +22,9 @@ class NovidadeService
         $pdo->beginTransaction();
 
         try {
+            if (!Campanha::isUsuarioParticipante($novidade->idCampanha, $idUsuario)) {
+                throw new \Exception("Você não tem permissão para criar novidades nesta campanha.");
+            }
             $novidadeCriada = Novidade::criar_noticia($novidade, $idUsuario);
 
             $descricao = $novidade->descricao;
@@ -91,8 +94,8 @@ class NovidadeService
             if (!$novidadeAntiga) {
                 throw new \Exception("Novidade não encontrada.");
             }
-            if ($novidadeAntiga['idAutor'] !== $idUsuario) {
-                throw new \Exception("Você não tem permissão para editar esta novidade.");
+            if (!Campanha::isUsuarioParticipante($novidadeAntiga['idCampanha'], $idUsuario)) {
+                throw new \Exception("Você não tem permissão para editar novidades nesta campanha.");
             }
 
             Novidade::editar_novidade($novidade);
@@ -129,8 +132,8 @@ class NovidadeService
             if (!$novidade) {
                 throw new \Exception("Novidade não encontrada.");
             }
-            if ($novidade['idUsuario'] !== $idUsuario) {
-                throw new \Exception("Você não tem permissão para deletar esta novidade.");
+            if (!Campanha::isUsuarioParticipante($novidade['idCampanha'], $idUsuario)) {
+                throw new \Exception("Você não tem permissão para deletar novidades nesta campanha.");
             }
 
             Novidade::deletar($idNovidade, $idUsuario);
