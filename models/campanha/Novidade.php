@@ -27,10 +27,14 @@ class Novidade extends Entidade
     public ?string $caminhoFotoAutor = "";
     public string $descCargoAutor = "";
     public bool $curtidaUsuario = false;
+    public ?int $idRecompensa = null;
 
     public static function obter(int $idNovidade, int $idUsuario): array {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor,\n                                     (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios\n                                     FROM Novidade N \n                                     JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo\n                                     WHERE N.id = :idNovidade");
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor, R.nivel as recompensaNivel, R.nomeNivel as recompensaNomeNivel,\n                                     (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios\n                                     FROM Novidade N \n                                     JOIN Usuario U ON U.idUsuario = N.idUsuario 
+                                     LEFT JOIN Cargo C ON C.id = U.idCargo
+                                     LEFT JOIN Recompensa R ON R.id = N.idRecompensa
+                                     WHERE N.id = :idNovidade");
 
         $stmt->execute([':idNovidade' => $idNovidade]);
         $novidade = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -69,7 +73,10 @@ class Novidade extends Entidade
     public static function listar(int $idCampanha, int $idUsuario): array {
         $pdo = Database::getConnection();
 
-        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor, \n                                     (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios\n                                     FROM Novidade N JOIN Usuario U ON U.idUsuario = N.idUsuario JOIN Cargo C ON C.id = U.idCargo\n                                     WHERE N.idCampanha = :idCampanha AND N.status = 'Ativa' ORDER BY N.dataCriacao DESC");
+        $stmt = $pdo->prepare("SELECT N.*, U.idUsuario as idAutor, U.nomeUsuario as nomeAutor, U.caminhoImagem AS caminhoFotoAutor, C.titulo AS descCargoAutor, R.nivel as recompensaNivel, R.nomeNivel as recompensaNomeNivel, \n                                     (SELECT COUNT(*) FROM Comentario C WHERE C.idNovidade = N.id) AS qtdComentarios\n                                     FROM Novidade N JOIN Usuario U ON U.idUsuario = N.idUsuario 
+                                     LEFT JOIN Cargo C ON C.id = U.idCargo
+                                     LEFT JOIN Recompensa R ON R.id = N.idRecompensa
+                                     WHERE N.idCampanha = :idCampanha AND N.status = 'Ativa' ORDER BY N.dataCriacao DESC");
         $stmt->execute([':idCampanha' => $idCampanha]);
         $novidades = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -105,8 +112,8 @@ class Novidade extends Entidade
 
     public static function criar_noticia(Novidade &$novidade, int $idUsuario): Novidade {
         $pdo = Database::getConnection();
-        $sql = "INSERT INTO Novidade (idCampanha, idUsuario, titulo, descricao, dataCriacao, status) 
-        VALUES (:idCampanha, :idUsuario, :titulo, :descricao, now(), :status)";
+        $sql = "INSERT INTO Novidade (idCampanha, idUsuario, titulo, descricao, dataCriacao, status, idRecompensa) 
+        VALUES (:idCampanha, :idUsuario, :titulo, :descricao, now(), :status, :idRecompensa)";
         $stmt = $pdo->prepare($sql);
 
         $stmt->execute([
@@ -115,6 +122,7 @@ class Novidade extends Entidade
             ':titulo' => $novidade->titulo,
             ':descricao' => $novidade->descricao,
             ':status' => 'Ativa',
+            ':idRecompensa' => $novidade->idRecompensa,
         ]);
         $novidade->id = $pdo->lastInsertId();
 
@@ -124,12 +132,13 @@ class Novidade extends Entidade
     public static function editar_novidade(Novidade $novidade): void
     {
         $pdo = Database::getConnection();
-        $sql = "UPDATE Novidade SET titulo = :titulo, descricao = :descricao, dataModificacao = now() WHERE id = :id";
+        $sql = "UPDATE Novidade SET titulo = :titulo, descricao = :descricao, idRecompensa = :idRecompensa, dataModificacao = now() WHERE id = :id";
         $stmt = $pdo->prepare($sql);
 
         $stmt->execute([
             ':titulo' => $novidade->titulo,
             ':descricao' => $novidade->descricao,
+            ':idRecompensa' => $novidade->idRecompensa,
             ':id' => $novidade->id,
         ]);
     }

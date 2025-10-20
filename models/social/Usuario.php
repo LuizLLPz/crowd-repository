@@ -32,6 +32,7 @@ class Usuario extends Entidade
     public ?string $descricao = '';
     public ?int $idCargo = null;
     public ?string $descricaoCargo = null;
+    public bool $tutorial_concluido = false;
 
     public function __construct()
     {
@@ -51,7 +52,7 @@ class Usuario extends Entidade
     public static function buscar_usuario(int $idUsuario): Usuario
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT U.*, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
+        $stmt = $pdo->prepare("SELECT U.*, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();
@@ -333,6 +334,16 @@ class Usuario extends Entidade
         $stmt = $pdo->prepare("UPDATE Usuario SET stripe_account_id = :stripe_account_id WHERE idUsuario = :idUsuario");
         $stmt->execute([
             ':stripe_account_id' => $stripeAccountId,
+            ':idUsuario' => $idUsuario
+        ]);
+    }
+
+    public static function atualizarTutorialConcluido(int $idUsuario, bool $concluido): void
+    {
+        $pdo = Database::getConnection();
+        $stmt = $pdo->prepare("UPDATE Usuario SET tutorial_concluido = :concluido WHERE idUsuario = :idUsuario");
+        $stmt->execute([
+            ':concluido' => $concluido ? 1 : 0,
             ':idUsuario' => $idUsuario
         ]);
     }

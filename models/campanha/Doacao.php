@@ -29,4 +29,13 @@ class Doacao extends Entidade
         ]);
         return $pdo->lastInsertId();
     }
+
+    public static function obter_valor_doado_usuario_campanha(int $idCampanha, int $idUsuario): int
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT SUM(valor) FROM Doacao WHERE idCampanha = :idCampanha AND idUsuario = :idUsuario AND status = 'completed'";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idCampanha' => $idCampanha, ':idUsuario' => $idUsuario]);
+        return (int) $stmt->fetchColumn();
+    }
 }

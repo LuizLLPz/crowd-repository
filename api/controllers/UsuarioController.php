@@ -7,6 +7,7 @@ use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\http\atributos\HttpGet;
 use modules\core\tipos\http\atributos\HttpPost;
 use modules\core\tipos\http\atributos\HttpPut;
+use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;
 use services\integrations\email\EmailService;
@@ -14,6 +15,15 @@ use services\social\UsuarioService;
 
 class UsuarioController extends ControllerBase
 {
+
+    #[HttpPut('/usuario/tutorial', auth: true)]
+    public function atualizarTutorialConcluido(): void
+    {
+        $idUsuario = self::$usuarioAutenticado->idUsuario;
+        $concluido = json_decode(file_get_contents('php://input'), true)['concluido'];
+        Usuario::atualizarTutorialConcluido($idUsuario, $concluido);
+        Http::HttpResponse(200, "Status do tutorial atualizado com sucesso!");
+    }
 
     #[HttpPost('/usuario/stripe/onboarding')]
     public function iniciarOnboardingStripe(): void

@@ -306,6 +306,12 @@ class Campanha extends Entidade
         return $result ? $result['idUsuario'] : null;
     }
 
+    public static function isOwner(int $idCampanha, int $idUsuario): bool
+    {
+        $ownerId = self::obter_idUsuario($idCampanha);
+        return $ownerId === $idUsuario;
+    }
+
     public static function isUsuarioParticipante(int $idCampanha, int $idUsuario): bool
     {
         $pdo = Database::getConnection();

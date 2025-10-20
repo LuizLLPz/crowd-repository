@@ -2,9 +2,11 @@
 namespace services\campanha;
 
 use models\campanha\Campanha;
+use models\campanha\Doacao;
 use models\campanha\enums\TipoAlvo;
 use models\campanha\InscricaoCampanha;
 use models\campanha\Novidade;
+use models\campanha\Recompensa;
 use models\core\Notificacao;
 use models\social\Curtida;
 use modules\core\utils\File;
@@ -144,5 +146,30 @@ class NovidadeService
         }
     }
 
+    public static function verificarAcessoNovidade(array $novidade, int $idUsuario): bool
+    {
+        // Se a novidade não tem recompensa associada, é pública
+        if (empty($novidade['idRecompensa'])) {
+            return true;
+        }
+
+        // Se o usuário é o dono da campanha, ele sempre tem acesso
+        if (Campanha::isOwner($novidade['idCampanha'], $idUsuario)) {
+            return true;
+        }
+
+        // Obter a recompensa associada à novidade
+        $recompensa = Recompensa::buscarPorId($novidade['idRecompensa']);
+        if (!$recompensa) {
+            // Se a recompensa não existe, mas a novidade está vinculada, negar acesso por segurança
+            return false;
+        }
+
+        // Obter o valor total doado pelo usuário para esta campanha
+        $valorDoado = Doacao::obter_valor_doado_usuario_campanha($novidade['idCampanha'], $idUsuario);
+
+        // Verificar se o valor doado é suficiente para a recompensa
+        return $valorDoado >= $recompensa['valorDoacao'];
+    }
 
 }

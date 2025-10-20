@@ -35,6 +35,7 @@ class NovidadeController extends ControllerBase
     #[HttpPost('/novidade')]
     public function salvar(Novidade $novidade): void
     {
+        $novidade->idRecompensa = $_POST['idRecompensa'] ?? null;
         NovidadeService::criar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
 
         try {
@@ -52,6 +53,7 @@ class NovidadeController extends ControllerBase
     #[HttpPut('/novidade')]
     public function editar(Novidade $novidade): void
     {
+        $novidade->idRecompensa = $_POST['idRecompensa'] ?? null;
         NovidadeService::editar_novidade($novidade, ControllerBase::$usuarioAutenticado->idUsuario);
 
         $mediaData = json_decode($_POST['mediaData'] ?? '[]', true);
