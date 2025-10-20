@@ -6,6 +6,7 @@ use Firebase\JWT\JWT;
 use models\social\Usuario;
 use modules\core\utils\File;
 use modules\db\Database;
+use services\core\ConfiguracaoNotificacaoUsuarioService;
 use services\core\NotificacaoService;
 
 class UsuarioService {
@@ -26,6 +27,9 @@ class UsuarioService {
                 "exp" => time() + (60 * 60 * 24),
             ];
             $jwt = JWT::encode($payload, $_ENV['JWT_KEY'], 'HS256');
+
+            ConfiguracaoNotificacaoUsuarioService::gerarPermissoesNotificacaoParaNovoUsuario($usuario->idUsuario);
+
 
             if (isset($_FILES['imagem'])) {
                 $imagemPerfil = $_FILES['imagem'];

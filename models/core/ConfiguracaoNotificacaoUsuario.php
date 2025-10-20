@@ -76,10 +76,8 @@ $result) {
                     ':enviaPopup' => (int)$config['enviaPopup'],
                 ]);
             }
-            $pdo->commit();
             return true;
         } catch (\Exception $e) {
-            $pdo->rollBack();
             error_log("Erro ao salvar configurações de notificação: " . $e->getMessage());
             return false;
         }
