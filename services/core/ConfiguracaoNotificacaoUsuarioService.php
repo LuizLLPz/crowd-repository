@@ -17,17 +17,17 @@ class ConfiguracaoNotificacaoUsuarioService
         foreach ($eventos as $evento) {
             $configEncontrada = null;
             foreach ($configuracoesExistentes as $existente) {
-                if ($existente['idEvento'] === $evento->id) {
+                if ($existente['idEvento'] === $evento['id']) {
                     $configEncontrada = $existente;
                     break;
                 }
             }
 
             $configuracoesFormatadas[] = [
-                'idEvento' => $evento->id,
-                'codigoEvento' => $evento->codigo,
-                'tituloEvento' => $evento->titulo,
-                'descricaoEvento' => $evento->descricao,
+                'idEvento' => $evento['id'],
+                'codigoEvento' => $evento['codigo'],
+                'tituloEvento' => $evento['titulo'],
+                'descricaoEvento' => $evento['descricao'],
                 'enviaEmail' => $configEncontrada ? $configEncontrada['enviaEmail'] : true,
                 'enviaPopup' => $configEncontrada ? $configEncontrada['enviaPopup'] : true,
             ];
