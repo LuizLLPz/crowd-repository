@@ -14,7 +14,9 @@ use modules\core\tipos\http\tipos\Link;
 use modules\core\tipos\LinkRel;
 use modules\core\utils\Http;
 use services\campanha\CampanhaService;
+use services\campanha\HistoricoInteracaoService;
 use services\core\MidiaService;
+use dto\historico\CreateHistoricoRequest;
 
 class CampanhaController extends ControllerBase
 {
@@ -24,7 +26,6 @@ class CampanhaController extends ControllerBase
         $idCampanha = $_GET["idCampanha"];
         $resp = Campanha::obter_campanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
         
-        // Registrar interação no histórico se o usuário estiver autenticado
         if ($this->estaAutenticado() && $resp && isset($resp->idCategoria)) {
             try {
                 $historicoService = new HistoricoInteracaoService();

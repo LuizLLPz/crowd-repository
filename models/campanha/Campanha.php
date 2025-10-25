@@ -101,7 +101,6 @@ class Campanha extends Entidade
                 $campanha['imagemCapa'] = GoogleCloudStorageService::getSignedUrl($campanha['imagemCapa']);
             }
             if (!empty($campanha['caminhoImagemAutor'])) {
-                error_log('Campanha::buscar_campanhas - caminhoImagemAutor before signing: ' . $campanha['caminhoImagemAutor']);
                 $campanha['caminhoImagemAutor'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoImagemAutor']);
             }
         }
