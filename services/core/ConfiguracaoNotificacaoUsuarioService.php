@@ -48,7 +48,7 @@ class ConfiguracaoNotificacaoUsuarioService
         foreach ($eventos as $evento) {
             $config = new ConfiguracaoNotificacaoUsuario();
             $config->idUsuario = $idUsuario;
-            $config->idEvento = $evento->id;
+            $config->idEvento = $evento['id'];
             $config->enviaEmail = true;
             $config->enviaPopup = true;
             $configs[] = $config;
