@@ -2,7 +2,7 @@
 namespace services\campanha;
 
 use models\campanha\Campanha;
-use models\Campanha\HistoricoCampanha;
+use models\campanha\HistoricoCampanha;
 use services\core\NotificacaoService;
 use modules\core\utils\File;
 use modules\db\Database;
