@@ -23,7 +23,25 @@ class CampanhaController extends ControllerBase
     {
         $idCampanha = $_GET["idCampanha"];
         $resp = Campanha::obter_campanha($idCampanha, ControllerBase::$usuarioAutenticado->idUsuario);
-        error_log('API Response: ' . print_r($resp, true));
+        
+        // Registrar interação no histórico se o usuário estiver autenticado
+        if ($this->estaAutenticado() && $resp && isset($resp->idCategoria)) {
+            try {
+                $historicoService = new HistoricoInteracaoService();
+                $request = new CreateHistoricoRequest([
+                    'idCampanha' => (int) $idCampanha,
+                    'idCategoria' => (int) $resp->idCategoria
+                ]);
+                
+                $historicoService->registrarInteracao(
+                    ControllerBase::$usuarioAutenticado->idUsuario,
+                    $request
+                );
+            } catch (\Exception $e) {
+                // Não falha a visualização da campanha se houver erro no histórico
+            }
+        }
+        
         echo json_encode($resp, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 

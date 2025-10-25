@@ -51,8 +51,10 @@ class Campanha extends Entidade
 
         if ($idUsuarioApoiador) {
             $sql .= " LEFT JOIN Doacao DOA ON DOA.idCampanha = C.idCampanha";
-            $where[] = "DOA.idUsuario = :idUsuarioApoiador";
+            $sql .= " LEFT JOIN InscricaoCampanha INS ON INS.idCampanha = C.idCampanha";
+            $where[] = "(DOA.idUsuario = :idUsuarioApoiador OR (INS.idUsuario = :idUsuarioApoiador2 AND INS.status = 'ativa'))";
             $params[':idUsuarioApoiador'] = $idUsuarioApoiador;
+            $params[':idUsuarioApoiador2'] = $idUsuarioApoiador;
         }
 
         if ($pesquisa) {
@@ -70,7 +72,7 @@ class Campanha extends Entidade
             $params[':idUsuario'] = $idUsuario;
         }
 
-        if ($idUsuario == null && !$administrador) {
+        if ($idUsuario == null && !$administrador && !$idUsuarioApoiador) {
            $where[] = "C.status = ".StatusCampanha::ATIVA->value;
         }
 
