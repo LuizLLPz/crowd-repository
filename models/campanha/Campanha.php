@@ -323,7 +323,7 @@ class Campanha extends Entidade
         }
 
         // Check if the user is an involved member (equipe)
-        $sql = "SELECT COUNT(*) FROM Envolvido WHERE idCampanha = :idCampanha AND idUsuario = :idUsuario";
+        $sql = "SELECT COUNT(*) FROM Envolvidos WHERE idCampanha = :idCampanha AND idUsuario = :idUsuario";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':idCampanha' => $idCampanha,
