@@ -65,7 +65,7 @@ class Campanha extends Entidade
         }
 
         if ($idUsuario == null && !$administrador) {
-           $where[] = "C.status = ".StatusCampanha::ATIVA->value;
+            $where[] = "C.status = ".StatusCampanha::ATIVA->value;
         }
 
         if ($administrador && $filtroAdministrador == null) {
@@ -73,8 +73,8 @@ class Campanha extends Entidade
         }
 
         if ($filtroAdministrador != null) {
-           $where[] = "C.status = :filtroAdministrador";
-           $params[':filtroAdministrador'] = $filtroAdministrador;
+            $where[] = "C.status = :filtroAdministrador";
+            $params[':filtroAdministrador'] = $filtroAdministrador;
         }
 
         if (!empty($where)) {
@@ -217,20 +217,20 @@ class Campanha extends Entidade
                                         :isPrivada,
                                         now()
                             )";
-                                $stmt = $pdo->prepare($sql);
-                                $stmt->execute([
-                                    ':titulo'           => $campanha->titulo,
-                                    ':roadmap'          => $campanha->roadmap,
-                                    ':idCategoria'      => $campanha->idCategoria,
-                                    ':metaArrecadacao'  => $campanha->metaArrecadacao,
-                                    ':telefone'         => $campanha->telefone,
-                                    ':linkedin'         => $campanha->linkedin,
-                                    ':email'            => $campanha->email,
-                                    ':github'           => $campanha->github,
-                                    ':instagram'        => $campanha->instagram,
-                                    ':idUsuario'        => $campanha->idUsuario,
-                                    ':isPrivada'        => $campanha->isPrivada
-                                ]);            $campanha->idCampanha = $pdo->lastInsertId();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':titulo'           => $campanha->titulo,
+                ':roadmap'          => $campanha->roadmap,
+                ':idCategoria'      => $campanha->idCategoria,
+                ':metaArrecadacao'  => $campanha->metaArrecadacao,
+                ':telefone'         => $campanha->telefone,
+                ':linkedin'         => $campanha->linkedin,
+                ':email'            => $campanha->email,
+                ':github'           => $campanha->github,
+                ':instagram'        => $campanha->instagram,
+                ':idUsuario'        => $campanha->idUsuario,
+                ':isPrivada'        => (int)$campanha->isPrivada // <-- CORREÇÃO APLICADA AQUI
+            ]);            $campanha->idCampanha = $pdo->lastInsertId();
 
         } catch (\Exception $e) {
             throw $e;
@@ -270,7 +270,7 @@ class Campanha extends Entidade
                 ':linkedin' => $campanha->linkedin,
                 ':github' => $campanha->github,
                 ':instagram' => $campanha->instagram,
-                ':isPrivada' => $campanha->isPrivada,
+                ':isPrivada' => (int)$campanha->isPrivada, // <-- CORREÇÃO APLICADA AQUI
                 ':idCampanha' => $campanha->idCampanha
             ]);
             return "Campanha atualizada com sucesso!";
@@ -373,5 +373,4 @@ class Campanha extends Entidade
         }
         return $midias;
     }
-
 }
