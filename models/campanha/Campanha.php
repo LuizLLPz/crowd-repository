@@ -45,8 +45,10 @@ class Campanha extends Entidade
 
         if ($idUsuarioApoiador) {
             $sql .= " LEFT JOIN Doacao DOA ON DOA.idCampanha = C.idCampanha";
-            $where[] = "DOA.idUsuario = :idUsuarioApoiador";
+            $sql .= " LEFT JOIN InscricaoCampanha INS ON INS.idCampanha = C.idCampanha";
+            $where[] = "(DOA.idUsuario = :idUsuarioApoiador OR (INS.idUsuario = :idUsuarioApoiador2 AND INS.status = 'ativa'))";
             $params[':idUsuarioApoiador'] = $idUsuarioApoiador;
+            $params[':idUsuarioApoiador2'] = $idUsuarioApoiador;
         }
 
         if ($pesquisa) {
@@ -113,7 +115,6 @@ class Campanha extends Entidade
                 $campanha['imagemCapa'] = GoogleCloudStorageService::getSignedUrl($campanha['imagemCapa']);
             }
             if (!empty($campanha['caminhoImagemAutor'])) {
-                error_log('Campanha::buscar_campanhas - caminhoImagemAutor before signing: ' . $campanha['caminhoImagemAutor']);
                 $campanha['caminhoImagemAutor'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoImagemAutor']);
             }
         }
