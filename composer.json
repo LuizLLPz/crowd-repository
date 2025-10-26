@@ -30,7 +30,10 @@
     "psr-4": {
       "modules\\": "modules/",
       "models\\": "models/",
-      "services\\": "services/"
+      "services\\": "services/",
+      "repositories\\": "repositories/",
+      "database\\": "database/",
+      "dto\\": "dto/"
     }
   }
 }
