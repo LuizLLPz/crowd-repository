@@ -85,6 +85,22 @@ class DoacaoController extends ControllerBase
         }
     }
 
+    #[HttpGet('/doacao/valor-total')]
+    public function getValorTotalDoado(): void
+    {
+        $idCampanha = $_GET['idCampanha'] ?? null;
+        $idUsuario = $_GET['idUsuario'] ?? null;
+
+        if (!$idCampanha || !$idUsuario) {
+            Http::HttpResponse(400, "ID da campanha e ID do usuário são obrigatórios.");
+            return;
+        }
+
+        $valorTotal = Doacao::obter_valor_doado_usuario_campanha((int)$idCampanha, (int)$idUsuario);
+
+        Http::HttpResponse(200, "Valor total doado recuperado com sucesso.", ['valorTotal' => $valorTotal]);
+    }
+
     #[HttpPost('/doacao/confirm', auth: false)]
     public function confirm(): void
     {

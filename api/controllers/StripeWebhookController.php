@@ -76,6 +76,19 @@ class StripeWebhookController extends ControllerBase
             } catch (\Exception $e) {
                 error_log("Falha ao enviar e-mail de nova doação: " . $e->getMessage());
             }
+        } elseif ($event->type == 'account.updated') {
+            $account = $event->data->object;
+            $usuario = Usuario::buscar_usuario_por_stripe_account_id($account->id);
+
+            if ($usuario) {
+                Usuario::atualizarStripeAccountStatus(
+                    $usuario->idUsuario,
+                    $account->details_submitted,
+                    $account->charges_enabled,
+                    $account->payouts_enabled,
+                    $account->requirements->currently_due[0] ?? ''
+                );
+            }
         }
 
         http_response_code(200);

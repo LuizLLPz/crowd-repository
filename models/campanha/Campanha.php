@@ -116,6 +116,7 @@ class Campanha extends Entidade
                 error_log('Campanha::buscar_campanhas - caminhoImagemAutor before signing: ' . $campanha['caminhoImagemAutor']);
                 $campanha['caminhoImagemAutor'] = GoogleCloudStorageService::getSignedUrl($campanha['caminhoImagemAutor']);
             }
+            $campanha['ownerStripeChargesEnabled'] = (bool)$campanha['ownerStripeChargesEnabled'];
         }
 
         return $campanhas;
@@ -176,6 +177,8 @@ class Campanha extends Entidade
             $inscricao = InscricaoCampanha::obterInscritoCampanhaUsuario($idCampanha, $idUsuario);
             $campanha->inscritoUsuario = $inscricao && $inscricao['status'] === 'ativa';
         }
+
+        $campanha->ownerStripeChargesEnabled = (bool)$campanha->ownerStripeChargesEnabled;
 
         return $campanha;
     }
