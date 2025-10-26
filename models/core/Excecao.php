@@ -136,14 +136,12 @@ class Excecao extends Entidade
         $pdo->beginTransaction();
 
         try {
-            // Fetch details of exceptions to be grouped
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $sql = "SELECT id, mensagem, stack_trace, passos, data_ocorrencia, tipo FROM Excecoes WHERE id IN ($placeholders)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($ids);
             $exceptionsToGroup = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            // Find the latest date
             $latestDate = '0000-00-00 00:00:00';
             foreach ($exceptionsToGroup as $ex) {
                 if ($ex['data_ocorrencia'] > $latestDate) {
@@ -151,7 +149,6 @@ class Excecao extends Entidade
                 }
             }
 
-            // Determine the title
             $firstMessage = $exceptionsToGroup[0]['mensagem'];
             $allSameMessage = true;
             foreach ($exceptionsToGroup as $ex) {
@@ -164,7 +161,6 @@ class Excecao extends Entidade
             $newMessage = $allSameMessage ? "Grupo de " . count($ids) . " ocorrências de: " . $firstMessage 
                                         : "Grupo de " . count($ids) . " exceções com mensagens diversas.";
 
-            // Create a new summary exception
             $newException = new self();
             $newException->mensagem = $newMessage;
             $newException->passos = "Este é um registro de exceções agrupadas. Os detalhes estão no contexto.";
@@ -172,10 +168,9 @@ class Excecao extends Entidade
             $newException->status = 'Nova';
             $newException->id_usuario_logado = Token::validarToken()->idUsuario;
             $newException->contexto = json_encode($exceptionsToGroup);
-            $newException->data_ocorrencia = $latestDate; // Set the latest date
+            $newException->data_ocorrencia = $latestDate;
             $newException->salvarManual();
 
-            // Delete the old exceptions
             $deleteSql = "DELETE FROM Excecoes WHERE id IN ($placeholders)";
             $deleteStmt = $pdo->prepare($deleteSql);
             $deleteStmt->execute($ids);

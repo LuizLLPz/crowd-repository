@@ -118,7 +118,6 @@ class MidiaService
             throw new \Exception("Erro ao deletar mídia existente: " . $e->getMessage());
         }
 
-        // Reset all covers for the entity first, before inserting new media that might be covers
         $updateSql = "UPDATE Midia SET isCapa = 0 WHERE idEntidade = :idEntidade AND tipoEntidade = :tipoEntidade";
         $stmt = $pdo->prepare($updateSql);
         $stmt->execute([':idEntidade' => $idEntidade, ':tipoEntidade' => $tipoEntidade]);

@@ -13,9 +13,8 @@ echo "=======================================\n\n";
 
 $url = 'http://127.0.0.1:8081/notify';
 
-// 1. Criar uma notificação real no banco
 $novaNotificacao = new Notificacao();
-$novaNotificacao->idUsuario = 40; // ID de um usuário de teste existente
+$novaNotificacao->idUsuario = 40;
 $novaNotificacao->titulo = 'TESTE DE SOCKET REAL';
 $novaNotificacao->descricao = 'Testando o envio de uma notificação persistida!';
 $novaNotificacao->tipo = 'teste_real';
@@ -31,7 +30,6 @@ try {
     exit;
 }
 
-// 2. Enviar a notificação real via socket
 $payloadDeTeste = [
     [
         'idNotificacao' => $notificacaoCriada->idNotificacao,

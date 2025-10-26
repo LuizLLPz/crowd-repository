@@ -2,7 +2,6 @@
 
 namespace models\campanha;
 
-use models\campanha\enums\FiltroCampanha;
 use models\campanha\enums\StatusCampanha;
 use models\campanha\enums\TipoAlvo;
 use models\core\Denuncia;
@@ -143,13 +142,12 @@ class Campanha extends Entidade
             }
         }
 
-        // Privacy check
         if ($campanha->isPrivada && $idUsuario !== null) {
             if (!self::isUsuarioParticipante($idCampanha, $idUsuario)) {
-                return null; // Not found for non-participants
+                return null;
             }
         } else if ($campanha->isPrivada && $idUsuario === null) {
-            return null; // Not found for unauthenticated users
+            return null;
         }
 
         if (!empty($campanha->roadmap)) {
@@ -234,7 +232,7 @@ class Campanha extends Entidade
                 ':github'           => $campanha->github,
                 ':instagram'        => $campanha->instagram,
                 ':idUsuario'        => $campanha->idUsuario,
-                ':isPrivada'        => (int)$campanha->isPrivada // <-- CORREÇÃO APLICADA AQUI
+                ':isPrivada'        => (int)$campanha->isPrivada
             ]);            $campanha->idCampanha = $pdo->lastInsertId();
 
         } catch (\Exception $e) {
@@ -246,7 +244,6 @@ class Campanha extends Entidade
     {
         $pdo = Database::getConnection();
         try {
-            // Fetch current campaign data to check valorArrecadado
             $currentCampanha = self::obter_campanha($campanha->idCampanha);
             if ($currentCampanha && $currentCampanha->valorArrecadado > 0 && $campanha->isPrivada) {
                 throw new \Exception("Não é possível tornar a campanha privada após receber doações.");
@@ -275,7 +272,7 @@ class Campanha extends Entidade
                 ':linkedin' => $campanha->linkedin,
                 ':github' => $campanha->github,
                 ':instagram' => $campanha->instagram,
-                ':isPrivada' => (int)$campanha->isPrivada, // <-- CORREÇÃO APLICADA AQUI
+                ':isPrivada' => (int)$campanha->isPrivada,
                 ':idCampanha' => $campanha->idCampanha
             ]);
             return "Campanha atualizada com sucesso!";
@@ -320,14 +317,11 @@ class Campanha extends Entidade
     public static function isUsuarioParticipante(int $idCampanha, int $idUsuario): bool
     {
         $pdo = Database::getConnection();
-
-        // Check if the user is the owner of the campaign
         $ownerId = self::obter_idUsuario($idCampanha);
         if ($ownerId === $idUsuario) {
             return true;
         }
 
-        // Check if the user is an involved member (equipe)
         $sql = "SELECT COUNT(*) FROM Envolvidos WHERE idCampanha = :idCampanha AND idUsuario = :idUsuario";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([

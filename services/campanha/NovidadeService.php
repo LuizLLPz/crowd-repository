@@ -148,27 +148,20 @@ class NovidadeService
 
     public static function verificarAcessoNovidade(array $novidade, int $idUsuario): bool
     {
-        // Se a novidade não tem recompensa associada, é pública
         if (empty($novidade['idRecompensa'])) {
             return true;
         }
-
-        // Se o usuário é o dono da campanha, ele sempre tem acesso
         if (Campanha::isOwner($novidade['idCampanha'], $idUsuario)) {
             return true;
         }
 
-        // Obter a recompensa associada à novidade
         $recompensa = Recompensa::buscarPorId($novidade['idRecompensa']);
         if (!$recompensa) {
-            // Se a recompensa não existe, mas a novidade está vinculada, negar acesso por segurança
             return false;
         }
 
-        // Obter o valor total doado pelo usuário para esta campanha
         $valorDoado = Doacao::obter_valor_doado_usuario_campanha($novidade['idCampanha'], $idUsuario);
 
-        // Verificar se o valor doado é suficiente para a recompensa
         return $valorDoado >= $recompensa['valorDoacao'];
     }
 

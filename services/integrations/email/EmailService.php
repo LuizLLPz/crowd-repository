@@ -13,7 +13,7 @@ class EmailService implements EmailProviderInterface
 
     public function __construct()
     {
-        $providerName = ConfigService::get('email', 'provider') ?? 'smtp'; // Default to smtp
+        $providerName = ConfigService::get('email', 'provider') ?? 'smtp';
 
         if ($providerName === 'sendgrid') {
             $config = ConfigService::getProviderConfig('sendgrid');
@@ -32,7 +32,7 @@ class EmailService implements EmailProviderInterface
                 'from_address' => $config['from_address'] ?? null,
             ];
             $this->provider = new AmazonSESEmailProvider($providerConfig);
-        } else { // smtp
+        } else {
             $config = ConfigService::getProviderConfig('smtp');
             $providerConfig = [
                 'host' => $config['host'] ?? null,

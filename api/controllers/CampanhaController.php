@@ -39,7 +39,7 @@ class CampanhaController extends ControllerBase
                     $request
                 );
             } catch (\Exception $e) {
-                // Não falha a visualização da campanha se houver erro no histórico
+                //
             }
         }
         

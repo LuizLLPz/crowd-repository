@@ -5,7 +5,6 @@ namespace services\integrations\stripe;
 use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Checkout\Session;
-use Stripe\Stripe;
 use models\campanha\Doacao;
 use models\campanha\Campanha;
 
@@ -45,13 +44,11 @@ class StripeService
             throw new \Exception("O dono da campanha não configurou a conta Stripe para recebimentos.");
         }
 
-        // Calculate platform fee (e.g., 5% of donation value)
-        $platformFeeRate = 0.05; // 5%
+        $platformFeeRate = 0.05;
         $platformFeeAmount = (int)($doacao->valor * $platformFeeRate);
 
-        // Ensure minimum fee if necessary, or handle small amounts
-        if ($platformFeeAmount < 50) { // Stripe minimum charge is 0.50 USD/EUR, so 50 cents
-            $platformFeeAmount = 50; // Example: minimum 0.50 BRL fee
+        if ($platformFeeAmount < 50) {
+            $platformFeeAmount = 50;
         }
 
         return Session::create([
@@ -62,7 +59,7 @@ class StripeService
                     'product_data' => [
                         'name' => 'Doação para ' . $campanha->titulo,
                     ],
-                    'unit_amount' => $doacao->valor, // Value in cents
+                    'unit_amount' => $doacao->valor,
                 ],
                 'quantity' => 1,
             ]],
