@@ -17,6 +17,7 @@ class UsuarioService {
             $pdo->beginTransaction();
 
             $resp = Usuario::criar_usuario($usuario);
+            ConfiguracaoNotificacaoUsuarioService::gerarPermissoesNotificacaoParaNovoUsuario($usuario->idUsuario);
             self::enviarCodigoVerificacao($usuario);
 
             $payload = [
@@ -27,8 +28,6 @@ class UsuarioService {
                 "exp" => time() + (60 * 60 * 24),
             ];
             $jwt = JWT::encode($payload, $_ENV['JWT_KEY'], 'HS256');
-
-            ConfiguracaoNotificacaoUsuarioService::gerarPermissoesNotificacaoParaNovoUsuario($usuario->idUsuario);
 
 
             if (isset($_FILES['imagem'])) {

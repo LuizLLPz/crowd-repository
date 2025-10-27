@@ -18,7 +18,7 @@ class Usuario extends Entidade
     public string $codigoVerificacao;
     public string $expiracaoCodigo;
     public bool $verificado;
-    public ?FuncaoUsuario $funcao = null;
+    public ?string $funcao = null;
     public ?string $caminhoImagem = '';
     public ?string $stripe_account_id = null;
     public ?string $stripe_details_submitted = null;
@@ -52,7 +52,7 @@ class Usuario extends Entidade
     public static function buscar_usuario(int $idUsuario): Usuario
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT U.*, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
+        $stmt = $pdo->prepare("SELECT U.*, U.funcao, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
         $usuario = $stmt->fetch();

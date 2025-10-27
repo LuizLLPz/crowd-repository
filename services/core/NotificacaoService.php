@@ -15,7 +15,7 @@ use services\integrations\SocketService;
 class NotificacaoService
 {
 
-    public static function disparar(string $eventoCodigo, int $idUsuarioDestinatario, array $dadosContexto = []): void
+    public static function disparar(string $eventoCodigo, int $idUsuarioDestinatario, array $dadosContexto = [], bool $validaPermissao = true): void
     {
         $evento = Evento::buscarPorCodigo($eventoCodigo);
 
@@ -50,7 +50,7 @@ class NotificacaoService
             }
         }
 
-        if ($configUsuario->enviaEmail) {
+        if ($configUsuario->enviaEmail || !$validaPermissao) {
             $template = EmailTemplate::buscarPorEvento($evento->id);
 
             if (!$template) {
