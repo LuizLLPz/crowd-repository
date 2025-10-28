@@ -77,10 +77,17 @@ class StripeWebhookController extends ControllerBase
                 error_log("Falha ao enviar e-mail de nova doação: " . $e->getMessage());
             }
         } elseif ($event->type == 'account.updated') {
+            error_log("Stripe Webhook: Received account.updated event.");
             $account = $event->data->object;
+            error_log("Stripe Account ID: " . $account->id);
+            error_log("Charges Enabled: " . ($account->charges_enabled ? 'true' : 'false'));
+            error_log("Details Submitted: " . ($account->details_submitted ? 'true' : 'false'));
+            error_log("Payouts Enabled: " . ($account->payouts_enabled ? 'true' : 'false'));
+
             $usuario = Usuario::buscar_usuario_por_stripe_account_id($account->id);
 
             if ($usuario) {
+                error_log("User found for account ID: " . $usuario->idUsuario);
                 Usuario::atualizarStripeAccountStatus(
                     $usuario->idUsuario,
                     $account->details_submitted,
@@ -88,6 +95,9 @@ class StripeWebhookController extends ControllerBase
                     $account->payouts_enabled,
                     $account->requirements->currently_due[0] ?? ''
                 );
+                error_log("User status updated for: " . $usuario->idUsuario);
+            } else {
+                error_log("No user found for Stripe account ID: " . $account->id);
             }
         }
 

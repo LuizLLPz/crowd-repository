@@ -187,98 +187,159 @@ class Campanha extends Entidade
     {
         $pdo = Database::getConnection();
 
-        try {
+        $sql = "INSERT INTO Campanha (
+                idUsuario,
+                titulo, 
+                roadmap, 
+                idCategoria, 
+                metaArrecadacao, 
+                valorArrecadado, 
+                telefone, 
+                linkedin, 
+                email, 
+                github, 
+                instagram,
+                status,
+                isPrivada,
+                dataCriacao,
+                dataFinal
+            ) VALUES (
+                :idUsuario,
+                :titulo, 
+                :roadmap, 
+                :idCategoria, 
+                :metaArrecadacao, 
+                0, 
+                :telefone, 
+                :linkedin, 
+                :email, 
+                :github, 
+                :instagram,
+                3,
+                :isPrivada,
+                now(),
+                :dataFinal
+    )";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':titulo'           => $campanha->titulo,
+            ':roadmap'          => $campanha->roadmap,
+            ':idCategoria'      => $campanha->idCategoria,
+            ':metaArrecadacao'  => $campanha->metaArrecadacao,
+            ':telefone'         => $campanha->telefone,
+            ':linkedin'         => $campanha->linkedin,
+            ':email'            => $campanha->email,
+            ':github'           => $campanha->github,
+            ':instagram'        => $campanha->instagram,
+            ':idUsuario'        => $campanha->idUsuario,
+            ':isPrivada'        => (int)$campanha->isPrivada,
+            ':dataFinal'        => $campanha->dataFinal
+        ]);
+        $campanha->idCampanha = $pdo->lastInsertId();
 
-            $sql = "INSERT INTO Campanha (
-                    idUsuario,
-                    titulo, 
-                    roadmap, 
-                    idCategoria, 
-                    metaArrecadacao, 
-                    valorArrecadado, 
-                    telefone, 
-                    linkedin, 
-                    email, 
-                    github, 
-                                        instagram,
-                                        status,
-                                        isPrivada,
-                                        dataCriacao
-                                    ) VALUES (
-                                        :idUsuario,
-                                        :titulo,
-                                        :roadmap,
-                                        :idCategoria,
-                                        :metaArrecadacao,
-                                        0,
-                                        :telefone,
-                                        :linkedin,
-                                        :email,
-                                        :github,
-                                        :instagram,
-                                        3,
-                                        :isPrivada,
-                                        now()
-                            )";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':titulo'           => $campanha->titulo,
-                ':roadmap'          => $campanha->roadmap,
-                ':idCategoria'      => $campanha->idCategoria,
-                ':metaArrecadacao'  => $campanha->metaArrecadacao,
-                ':telefone'         => $campanha->telefone,
-                ':linkedin'         => $campanha->linkedin,
-                ':email'            => $campanha->email,
-                ':github'           => $campanha->github,
-                ':instagram'        => $campanha->instagram,
-                ':idUsuario'        => $campanha->idUsuario,
-                ':isPrivada'        => (int)$campanha->isPrivada
-            ]);            $campanha->idCampanha = $pdo->lastInsertId();
+        if (!empty($campanha->envolvidos)) {
+            foreach ($campanha->envolvidos as $envolvido) {
+                $sqlEnvolvido = "INSERT INTO Envolvidos (idCampanha, idUsuario, papel) VALUES (:idCampanha, :idUsuario, :papel)";
+                $stmtEnvolvido = $pdo->prepare($sqlEnvolvido);
+                $stmtEnvolvido->execute([
+                    ':idCampanha' => $campanha->idCampanha,
+                    ':idUsuario' => $envolvido->idUsuario,
+                    ':papel' => $envolvido->funcao,
+                ]);
+            }
+        }
 
-        } catch (\Exception $e) {
-            throw $e;
+        if (!empty($campanha->recompensas)) {
+            foreach ($campanha->recompensas as $recompensa) {
+                $sqlRecompensa = "INSERT INTO Recompensa (idCampanha, nivel, nomeNivel, valorDoacao, vantagens, corRecompensa) VALUES (:idCampanha, :nivel, :nomeNivel, :valorDoacao, :vantagens, :corRecompensa)";
+                $stmtRecompensa = $pdo->prepare($sqlRecompensa);
+                $stmtRecompensa->execute([
+                    ':idCampanha' => $campanha->idCampanha,
+                    ':nivel' => $recompensa->nivel,
+                    ':nomeNivel' => $recompensa->nomeNivel,
+                    ':valorDoacao' => $recompensa->valorDoacao,
+                    ':vantagens' => $recompensa->vantagens,
+                    ':corRecompensa' => $recompensa->corRecompensa,
+                ]);
+            }
         }
     }
 
     public static function editar_campanha(Campanha $campanha): string
     {
         $pdo = Database::getConnection();
-        try {
-            $currentCampanha = self::obter_campanha($campanha->idCampanha);
-            if ($currentCampanha && $currentCampanha->valorArrecadado > 0 && $campanha->isPrivada) {
-                throw new \Exception("Não é possível tornar a campanha privada após receber doações.");
-            }
-
-            $sql = "UPDATE Campanha SET 
-                        titulo = :titulo,
-                        roadmap = :roadmap,
-                        idCategoria = :idCategoria,
-                        metaArrecadacao = :metaArrecadacao,
-                        telefone = :telefone,
-                        email = :email,
-                        linkedin = :linkedin,
-                        github = :github,
-                        instagram = :instagram,
-                        isPrivada = :isPrivada
-                    WHERE idCampanha = :idCampanha";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':titulo' => $campanha->titulo,
-                ':roadmap' => $campanha->roadmap,
-                ':idCategoria' => $campanha->idCategoria,
-                ':metaArrecadacao' => $campanha->metaArrecadacao,
-                ':telefone' => $campanha->telefone,
-                ':email' => $campanha->email,
-                ':linkedin' => $campanha->linkedin,
-                ':github' => $campanha->github,
-                ':instagram' => $campanha->instagram,
-                ':isPrivada' => (int)$campanha->isPrivada,
-                ':idCampanha' => $campanha->idCampanha
-            ]);
-            return "Campanha atualizada com sucesso!";
-        } catch (\Exception $e) {
-            throw $e;
+        $currentCampanha = self::obter_campanha($campanha->idCampanha);
+        if ($currentCampanha && $currentCampanha->valorArrecadado > 0 && $campanha->isPrivada) {
+            throw new \Exception("Não é possível tornar a campanha privada após receber doações.");
         }
+
+        $sql = "UPDATE Campanha SET 
+                    titulo = :titulo,
+                    roadmap = :roadmap,
+                    idCategoria = :idCategoria,
+                    metaArrecadacao = :metaArrecadacao,
+                    telefone = :telefone,
+                    email = :email,
+                    linkedin = :linkedin,
+                    github = :github,
+                    instagram = :instagram,
+                    isPrivada = :isPrivada,
+                    dataFinal = :dataFinal
+                WHERE idCampanha = :idCampanha";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':titulo' => $campanha->titulo,
+            ':roadmap' => $campanha->roadmap,
+            ':idCategoria' => $campanha->idCategoria,
+            ':metaArrecadacao' => $campanha->metaArrecadacao,
+            ':telefone' => $campanha->telefone,
+            ':email' => $campanha->email,
+            ':linkedin' => $campanha->linkedin,
+            ':github' => $campanha->github,
+            ':instagram' => $campanha->instagram,
+            ':isPrivada' => (int)$campanha->isPrivada,
+            ':dataFinal' => $campanha->dataFinal,
+            ':idCampanha' => $campanha->idCampanha
+        ]);
+
+        if (!empty($campanha->envolvidos)) {
+            // First, delete existing envolvidos for this campaign
+            $sqlDeleteEnvolvidos = "DELETE FROM Envolvidos WHERE idCampanha = :idCampanha";
+            $stmtDeleteEnvolvidos = $pdo->prepare($sqlDeleteEnvolvidos);
+            $stmtDeleteEnvolvidos->execute([':idCampanha' => $campanha->idCampanha]);
+
+            foreach ($campanha->envolvidos as $envolvido) {
+                $sqlEnvolvido = "INSERT INTO Envolvidos (idCampanha, idUsuario, papel) VALUES (:idCampanha, :idUsuario, :papel)";
+                $stmtEnvolvido = $pdo->prepare($sqlEnvolvido);
+                $stmtEnvolvido->execute([
+                    ':idCampanha' => $campanha->idCampanha,
+                    ':idUsuario' => $envolvido->idUsuario,
+                    ':papel' => $envolvido->funcao,
+                ]);
+            }
+        }
+
+        if (!empty($campanha->recompensas)) {
+            // First, delete existing recompensas for this campaign
+            $sqlDeleteRecompensas = "DELETE FROM Recompensa WHERE idCampanha = :idCampanha";
+            $stmtDeleteRecompensas = $pdo->prepare($sqlDeleteRecompensas);
+            $stmtDeleteRecompensas->execute([':idCampanha' => $campanha->idCampanha]);
+
+            foreach ($campanha->recompensas as $recompensa) {
+                $sqlRecompensa = "INSERT INTO Recompensa (idCampanha, nivel, nomeNivel, valorDoacao, vantagens, corRecompensa) VALUES (:idCampanha, :nivel, :nomeNivel, :valorDoacao, :vantagens, :corRecompensa)";
+                $stmtRecompensa = $pdo->prepare($sqlRecompensa);
+                $stmtRecompensa->execute([
+                    ':idCampanha' => $campanha->idCampanha,
+                    ':nivel' => $recompensa->nivel,
+                    ':nomeNivel' => $recompensa->nomeNivel,
+                    ':valorDoacao' => $recompensa->valorDoacao,
+                    ':vantagens' => $recompensa->vantagens,
+                    ':corRecompensa' => $recompensa->corRecompensa,
+                ]);
+            }
+        }
+
+        return "Campanha atualizada com sucesso!";
     }
 
     public static function alterar_status(int $idCampanha, int $status): void

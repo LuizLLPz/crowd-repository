@@ -7,7 +7,6 @@ use modules\core\tipos\core\controllers\ControllerBase;
 use modules\core\tipos\http\atributos\HttpGet;
 use modules\core\tipos\http\atributos\HttpPost;
 use modules\core\tipos\http\atributos\HttpPut;
-use modules\core\tipos\http\tipos\FuncaoUsuario;
 use modules\core\utils\Http;
 use modules\core\utils\Utils;
 use services\integrations\email\EmailService;
@@ -23,34 +22,6 @@ class UsuarioController extends ControllerBase
         $concluido = json_decode(file_get_contents('php://input'), true)['concluido'];
         Usuario::atualizarTutorialConcluido($idUsuario, $concluido);
         Http::HttpResponse(200, "Status do tutorial atualizado com sucesso!");
-    }
-
-    #[HttpPost('/usuario/stripe/onboarding')]
-    public function iniciarOnboardingStripe(): void
-    {
-        $usuario = Usuario::buscar_usuario(self::$usuarioAutenticado->idUsuario);
-
-        if (!$usuario->stripe_account_id) {
-            $account = \Stripe\Account::create([
-                'type' => 'express',
-                'email' => $usuario->email,
-                'capabilities' => [
-                    'card_payments' => ['requested' => true],
-                    'transfers' => ['requested' => true],
-                ],
-            ]);
-            $usuario->stripe_account_id = $account->id;
-            Usuario::atualizarStripeAccountId($usuario->idUsuario, $account->id);
-        }
-
-        $accountLink = \Stripe\AccountLink::create([
-            'account' => $usuario->stripe_account_id,
-            'refresh_url' => 'http://localhost:3000/perfil',
-            'return_url' => 'http://localhost:3000/perfil',
-            'type' => 'account_onboarding',
-        ]);
-
-        echo json_encode(['url' => $accountLink->url]);
     }
 
 

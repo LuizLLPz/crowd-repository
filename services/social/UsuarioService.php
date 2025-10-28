@@ -68,7 +68,8 @@ class UsuarioService {
         NotificacaoService::disparar(
             'verificar-nova-conta',
             $usuario->idUsuario,
-            ['codigoVerificacao' => $usuario->codigoVerificacao]
+            ['codigoVerificacao' => $usuario->codigoVerificacao],
+            false // <-- Bypass permission validation
         );
     }
 

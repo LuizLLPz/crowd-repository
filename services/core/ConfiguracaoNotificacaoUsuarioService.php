@@ -4,6 +4,7 @@ namespace services\core;
 
 use models\core\ConfiguracaoNotificacaoUsuario;
 use models\core\Evento;
+use modules\db\Database;
 
 
 class ConfiguracaoNotificacaoUsuarioService

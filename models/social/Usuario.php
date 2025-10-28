@@ -18,7 +18,7 @@ class Usuario extends Entidade
     public string $codigoVerificacao;
     public string $expiracaoCodigo;
     public bool $verificado;
-    public ?string $funcao = null;
+    public ?FuncaoUsuario $funcao = null;
     public ?string $caminhoImagem = '';
     public ?string $stripe_account_id = null;
     public ?string $stripe_details_submitted = null;
@@ -42,7 +42,7 @@ class Usuario extends Entidade
     public function __set(string $name, mixed $value): void
     {
         if ($name === 'funcao' && is_string($value)) {
-            $this->$name = FuncaoUsuario::tryFrom($value);
+            $this->funcao = FuncaoUsuario::tryFrom($value);
             return;
         }
 
@@ -54,8 +54,26 @@ class Usuario extends Entidade
         $pdo = Database::getConnection();
         $stmt = $pdo->prepare("SELECT U.*, U.funcao, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
-        $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, Usuario::class);
-        $usuario = $stmt->fetch();
+        $usuarioData = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$usuarioData) {
+            throw new \Exception("Usuário não encontrado.");
+        }
+
+        $usuario = new Usuario();
+        foreach ($usuarioData as $key => $value) {
+            if (property_exists($usuario, $key)) {
+                $usuario->$key = $value;
+            }
+        }
+
+        if (isset($usuarioData['funcao'])) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuarioData['funcao']);
+        }
+
+        if (is_string($usuario->funcao)) {
+            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
+        }
 
         if ($usuario && !empty($usuario->descricao)) {
             $dom = new \DOMDocument();
@@ -79,10 +97,6 @@ class Usuario extends Entidade
 
         if ($usuario && !empty($usuario->caminhoImagem)) {
             $usuario->caminhoImagem = GoogleCloudStorageService::getSignedUrl($usuario->caminhoImagem);
-        }
-
-        if ($usuario && is_string($usuario->funcao)) {
-            $usuario->funcao = FuncaoUsuario::tryFrom($usuario->funcao);
         }
 
         return $usuario;
@@ -347,4 +361,5 @@ class Usuario extends Entidade
             ':idUsuario' => $idUsuario
         ]);
     }
+
 }

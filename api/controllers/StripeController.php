@@ -62,9 +62,37 @@ class StripeController extends ControllerBase
                 'stripe_account' => $usuario->stripe_account_id,
             ]);
 
-            Http::HttpResponse(200, "Saldo recuperado com sucesso.", $balance);
+            Http::HttpResponse(200, "Saldo recuperado com sucesso.", $balance->available);
         } catch (\Exception $e) {
             Http::HttpResponse(500, "Erro ao buscar saldo no Stripe: " . $e->getMessage());
+        }
+    }
+
+    #[HttpPost('/usuario/stripe/refresh')]
+    public function refreshAccount(): void
+    {
+        $usuario = Usuario::buscar_usuario(ControllerBase::$usuarioAutenticado->idUsuario);
+
+        if (!$usuario || !$usuario->idUsuario || empty($usuario->stripe_account_id)) {
+            Http::HttpResponse(400, "Usuário não possui conta Stripe conectada.");
+            return;
+        }
+
+        try {
+            Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
+            $account = \Stripe\Account::retrieve($usuario->stripe_account_id);
+
+            Usuario::atualizarStripeAccountStatus(
+                $usuario->idUsuario,
+                $account->details_submitted,
+                $account->charges_enabled,
+                $account->payouts_enabled,
+                $account->requirements->currently_due[0] ?? ''
+            );
+
+            Http::HttpResponse(200, "Status da conta Stripe atualizado com sucesso!");
+        } catch (\Exception $e) {
+            Http::HttpResponse(500, "Erro ao atualizar status da conta Stripe: " . $e->getMessage());
         }
     }
 }

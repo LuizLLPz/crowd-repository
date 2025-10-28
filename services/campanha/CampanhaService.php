@@ -4,9 +4,7 @@ namespace services\campanha;
 use models\campanha\Campanha;
 use models\campanha\HistoricoCampanha;
 use services\core\NotificacaoService;
-use modules\core\utils\File;
 use modules\db\Database;
-use services\core\MidiaService;
 
 class CampanhaService
 {
@@ -77,7 +75,7 @@ class CampanhaService
 
             $campanha = Campanha::obter_campanha($idCampanha);
             if ($campanha && $campanha->idUsuario != $idAprovador) {
-                $appUrl = getenv('APP_URL') ?: 'http://localhost:3000';
+                $appUrl = getenv('APP_URL') ?: 'http://localhost:3001';
                 NotificacaoService::disparar(
                     'campanha-reprovada',
                     $campanha->idUsuario,

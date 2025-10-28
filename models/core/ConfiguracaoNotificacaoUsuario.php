@@ -71,9 +71,9 @@ $result) {
             foreach ($configs as $config) {
                 $stmt->execute([
                     ':idUsuario' => $idUsuario,
-                    ':idEvento' => $config['idEvento'],
-                    ':enviaEmail' => (int)$config['enviaEmail'],
-                    ':enviaPopup' => (int)$config['enviaPopup'],
+                    ':idEvento' => $config->idEvento,
+                    ':enviaEmail' => (int)$config->enviaEmail,
+                    ':enviaPopup' => (int)$config->enviaPopup,
                 ]);
             }
             return true;
