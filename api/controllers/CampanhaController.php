@@ -123,7 +123,6 @@ class CampanhaController extends ControllerBase
             MidiaService::processarMidias($_FILES, $mediaData, $campanha->idCampanha, 'Campanha');
         } catch (\Exception $e) {
             Http::HttpResponse(400, $e->getMessage());
-            return;
         }
 
         Http::HttpResponse(200, $msg);
