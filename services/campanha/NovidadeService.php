@@ -42,13 +42,17 @@ class NovidadeService
                     }
                 }
 
-                            if (!empty($imagePaths)) {
-                                MidiaService::salvar_midias_markdown($novidadeCriada->id, 'Novidade', $imagePaths);
-                            }
-                
-                            if (isset($_FILES['newMediaFiles'])) {
-                                MidiaService::salvar_midias($novidadeCriada->id, 'Novidade', $_FILES['newMediaFiles']);
-                            }            }
+                if (!empty($imagePaths)) {
+                    $stmt = $pdo->prepare("INSERT INTO Midia (idEntidade, tipoEntidade, caminhoArquivo, tipo, isCapa) VALUES (:idEntidade, :tipoEntidade, :caminhoArquivo, 'imagem', 0)");
+                    foreach ($imagePaths as $path) {
+                        $stmt->execute([
+                            ':idEntidade' => $novidadeCriada->id,
+                            ':tipoEntidade' => 'Novidade',
+                            ':caminhoArquivo' => $path,
+                        ]);
+                    }
+                }
+            }
 
             $inscritos = InscricaoCampanha::buscarInscritosPorCampanha($novidadeCriada->idCampanha);
 

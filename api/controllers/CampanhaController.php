@@ -99,7 +99,6 @@ class CampanhaController extends ControllerBase
             MidiaService::processarMidias($_FILES, [], $campanha->idCampanha, 'Campanha');
         } catch (\Exception $e) {
             Http::HttpResponse(400, $e->getMessage());
-            return;
         }
 
         $url = $_ENV['CORS_ORIGIN'] . '/campanha/' . $campanha->idCampanha;

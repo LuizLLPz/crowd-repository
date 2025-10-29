@@ -42,7 +42,6 @@ class CampanhaService
     {
         $pdo = Database::getConnection();
         try {
-            error_log('$_FILES in CampanhaService: ' . print_r($_FILES, true));
             $pdo->beginTransaction();
             $campanhaAntiga = Campanha::obter_campanha($campanha->idCampanha);
 

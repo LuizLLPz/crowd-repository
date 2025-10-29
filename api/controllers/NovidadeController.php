@@ -59,7 +59,11 @@ class NovidadeController extends ControllerBase
         $mediaData = json_decode($_POST['mediaData'] ?? '[]', true);
 
         try {
-            MidiaService::processarMidias($_FILES, $mediaData, $novidade->id, 'Novidade');
+            $filesToProcess = [];
+            if (isset($_FILES['media'])) {
+                $filesToProcess['newMediaFiles'] = $_FILES['media'];
+            }
+            MidiaService::processarMidias($filesToProcess, [], $novidade->id, 'Novidade');
         } catch (\Exception $e) {
             Http::HttpResponse(400, $e->getMessage());
         }
