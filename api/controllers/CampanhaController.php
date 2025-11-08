@@ -93,6 +93,8 @@ class CampanhaController extends ControllerBase
     public function salvar(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $campanha->envolvidos = json_decode($_POST['envolvidos'] ?? '[]', true);
+        $campanha->recompensas = json_decode($_POST['recompensas'] ?? '[]', true);
         CampanhaService::criar_campanha($campanha);
 
         try {
@@ -115,6 +117,8 @@ class CampanhaController extends ControllerBase
     public function editar(Campanha $campanha): void
     {
         $campanha->idUsuario = ControllerBase::$usuarioAutenticado->idUsuario;
+        $campanha->envolvidos = json_decode($_POST['envolvidos'] ?? '[]', true);
+        $campanha->recompensas = json_decode($_POST['recompensas'] ?? '[]', true);
         $msg = CampanhaService::editar_campanha($campanha);
 
         $mediaData = json_decode($_POST['mediaData'] ?? '[]', true);

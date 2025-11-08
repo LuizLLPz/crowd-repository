@@ -20,6 +20,8 @@ class Campanha extends Entidade
     public string $categoria = "";
     public string $roadmap = '';
     public array $midias = [];
+    public array $envolvidos = [];
+    public array $recompensas = [];
     public int $metaArrecadacao = 0;
     public int $valorArrecadado = 0;
     public string $telefone = '';
@@ -179,8 +181,18 @@ class Campanha extends Entidade
         }
 
         $campanha->ownerStripeChargesEnabled = (bool)$campanha->ownerStripeChargesEnabled;
+        $campanha->hasDoacoes = self::hasDoacoes($idCampanha);
 
         return $campanha;
+    }
+
+    public static function hasDoacoes(int $idCampanha): bool
+    {
+        $pdo = Database::getConnection();
+        $sql = "SELECT COUNT(*) FROM Doacao WHERE idCampanha = :idCampanha AND status = 'completed'";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':idCampanha' => $idCampanha]);
+        return $stmt->fetchColumn() > 0;
     }
 
     public static function criar_campanha(Campanha $campanha)
@@ -236,33 +248,6 @@ class Campanha extends Entidade
             ':dataFinal'        => $campanha->dataFinal
         ]);
         $campanha->idCampanha = $pdo->lastInsertId();
-
-        if (!empty($campanha->envolvidos)) {
-            foreach ($campanha->envolvidos as $envolvido) {
-                $sqlEnvolvido = "INSERT INTO Envolvidos (idCampanha, idUsuario, papel) VALUES (:idCampanha, :idUsuario, :papel)";
-                $stmtEnvolvido = $pdo->prepare($sqlEnvolvido);
-                $stmtEnvolvido->execute([
-                    ':idCampanha' => $campanha->idCampanha,
-                    ':idUsuario' => $envolvido->idUsuario,
-                    ':papel' => $envolvido->funcao,
-                ]);
-            }
-        }
-
-        if (!empty($campanha->recompensas)) {
-            foreach ($campanha->recompensas as $recompensa) {
-                $sqlRecompensa = "INSERT INTO Recompensa (idCampanha, nivel, nomeNivel, valorDoacao, vantagens, corRecompensa) VALUES (:idCampanha, :nivel, :nomeNivel, :valorDoacao, :vantagens, :corRecompensa)";
-                $stmtRecompensa = $pdo->prepare($sqlRecompensa);
-                $stmtRecompensa->execute([
-                    ':idCampanha' => $campanha->idCampanha,
-                    ':nivel' => $recompensa->nivel,
-                    ':nomeNivel' => $recompensa->nomeNivel,
-                    ':valorDoacao' => $recompensa->valorDoacao,
-                    ':vantagens' => $recompensa->vantagens,
-                    ':corRecompensa' => $recompensa->corRecompensa,
-                ]);
-            }
-        }
     }
 
     public static function editar_campanha(Campanha $campanha): string
@@ -371,8 +356,14 @@ class Campanha extends Entidade
 
     public static function isOwner(int $idCampanha, int $idUsuario): bool
     {
-        $ownerId = self::obter_idUsuario($idCampanha);
-        return $ownerId === $idUsuario;
+        $pdo = Database::getConnection();
+        $sql = "SELECT COUNT(*) FROM Envolvido WHERE idCampanha = :idCampanha AND idUsuario = :idUsuario AND papel = 'Dono'";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idCampanha' => $idCampanha,
+            ':idUsuario' => $idUsuario
+        ]);
+        return $stmt->fetchColumn() > 0;
     }
 
     public static function isUsuarioParticipante(int $idCampanha, int $idUsuario): bool

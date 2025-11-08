@@ -6,16 +6,44 @@ use models\campanha\HistoricoCampanha;
 use services\core\NotificacaoService;
 use modules\db\Database;
 
+use models\Envolvido;
+use models\Recompensa;
+
 class CampanhaService
 {
     public static function criar_campanha(Campanha $campanha): void
     {
+        $dataFinal = new \DateTime($campanha->dataFinal);
+        $dataMinima = (new \DateTime())->add(new \DateInterval('P1M'));
+
+        if ($dataFinal < $dataMinima) {
+            throw new \Exception("A data de encerramento deve ser de no mínimo 1 mês a partir de hoje.");
+        }
+
         $pdo = Database::getConnection();
         try {
-            error_log('CRIAR_CAMPANHA_SERVICE: BEGIN');
             $pdo->beginTransaction();
+
             Campanha::criar_campanha($campanha);
-            error_log('CRIAR_CAMPANHA_SERVICE: Campanha created in model, ID: ' . $campanha->idCampanha);
+
+            foreach ($campanha->envolvidos as $envolvidoData) {
+                $envolvido = new Envolvido();
+                $envolvido->idCampanha = $campanha->idCampanha;
+                $envolvido->idUsuario = $envolvidoData['idUsuario'];
+                $envolvido->papel = $envolvidoData['funcao'];
+                Envolvido::salvar($envolvido);
+            }
+
+            foreach ($campanha->recompensas as $recompensaData) {
+                $recompensa = new Recompensa();
+                $recompensa->idCampanha = $campanha->idCampanha;
+                $recompensa->nivel = $recompensaData['nivel'];
+                $recompensa->nomeNivel = $recompensaData['nomeNivel'];
+                $recompensa->valorDoacao = (int) preg_replace('/[^0-9]/', '', $recompensaData['valorDoacao']);
+                $recompensa->vantagens = $recompensaData['vantagens'];
+                $recompensa->corRecompensa = $recompensaData['corRecompensa'];
+                Recompensa::salvar($recompensa);
+            }
 
             $historico = new HistoricoCampanha();
             $historico->idCampanha = $campanha->idCampanha;
@@ -25,27 +53,58 @@ class CampanhaService
             $historico->descricao = "Campanha cadastrada pelo usuário";
 
             HistoricoCampanha::salvarHistorico($historico);
-            error_log('CRIAR_CAMPANHA_SERVICE: Historico saved');
 
             $pdo->commit();
-            error_log('CRIAR_CAMPANHA_SERVICE: COMMIT SUCCEEDED');
-
         } catch (\Exception $e) {
-            error_log('CRIAR_CAMPANHA_SERVICE: EXCEPTION CAUGHT - ' . $e->getMessage());
             $pdo->rollBack();
-            error_log('CRIAR_CAMPANHA_SERVICE: ROLLBACK EXECUTED');
             throw $e;
         }
     }
 
     public static function editar_campanha(Campanha $campanha): string
     {
+        $dataFinal = new \DateTime($campanha->dataFinal);
+        $dataMinima = (new \DateTime())->add(new \DateInterval('P1M'));
+
+        if ($dataFinal < $dataMinima) {
+            throw new \Exception("A data de encerramento deve ser de no mínimo 1 mês a partir de hoje.");
+        }
+
         $pdo = Database::getConnection();
         try {
             $pdo->beginTransaction();
             $campanhaAntiga = Campanha::obter_campanha($campanha->idCampanha);
 
+            if ($campanhaAntiga->hasDoacoes && !empty($campanha->recompensas)) {
+                throw new \Exception("Não é possível editar recompensas de uma campanha que já recebeu doações.");
+            }
+
             Campanha::editar_campanha($campanha);
+
+            // Clear existing envolvidos and recompensas
+            $stmt = $pdo->prepare("DELETE FROM Envolvido WHERE idCampanha = :idCampanha");
+            $stmt->execute([':idCampanha' => $campanha->idCampanha]);
+            $stmt = $pdo->prepare("DELETE FROM Recompensa WHERE idCampanha = :idCampanha");
+            $stmt->execute([':idCampanha' => $campanha->idCampanha]);
+
+            foreach ($campanha->envolvidos as $envolvidoData) {
+                $envolvido = new Envolvido();
+                $envolvido->idCampanha = $campanha->idCampanha;
+                $envolvido->idUsuario = $envolvidoData['idUsuario'];
+                $envolvido->papel = $envolvidoData['funcao'];
+                Envolvido::salvar($envolvido);
+            }
+
+            foreach ($campanha->recompensas as $recompensaData) {
+                $recompensa = new Recompensa();
+                $recompensa->idCampanha = $campanha->idCampanha;
+                $recompensa->nivel = $recompensaData['nivel'];
+                $recompensa->nomeNivel = $recompensaData['nomeNivel'];
+                $recompensa->valorDoacao = (int) preg_replace('/[^0-9]/', '', $recompensaData['valorDoacao']);
+                $recompensa->vantagens = $recompensaData['vantagens'];
+                $recompensa->corRecompensa = $recompensaData['corRecompensa'];
+                Recompensa::salvar($recompensa);
+            }
 
             $pdo->commit();
             return "Campanha atualizada com sucesso!";

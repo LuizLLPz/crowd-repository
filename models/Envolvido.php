@@ -13,7 +13,7 @@ class Envolvido extends Entidade
     public int $idEnvolvido;
     public int $idCampanha;
     public int $idUsuario;
-    public string $nomeTabela = "Envolvido";
+    public string $nomeTabela = "Envolvidos";
     public string $papel;
 
     public function __construct()
@@ -42,7 +42,7 @@ class Envolvido extends Entidade
                 u.caminhoImagem,
                 u.descricao,
                 c.titulo AS cargo
-            FROM Envolvido e
+            FROM Envolvidos e
             INNER JOIN Usuario u 
                 ON e.idUsuario = u.idUsuario
             LEFT JOIN Cargo c
@@ -61,7 +61,7 @@ class Envolvido extends Entidade
         }
 
         $pdo = Database::getConnection();
-        $sql = "INSERT INTO Envolvido (idCampanha, idUsuario, papel) VALUES (:idCampanha, :idUsuario, :papel)";
+        $sql = "INSERT INTO Envolvidos (idCampanha, idUsuario, papel) VALUES (:idCampanha, :idUsuario, :papel)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':idCampanha' => $envolvido->idCampanha,
@@ -73,7 +73,7 @@ class Envolvido extends Entidade
     public static function removerEnvolvido(int $idEnvolvido, int $idUsuarioLogado): void
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT idCampanha FROM Envolvido WHERE idEnvolvido = :idEnvolvido");
+        $stmt = $pdo->prepare("SELECT idCampanha FROM Envolvidos WHERE idEnvolvido = :idEnvolvido");
         $stmt->execute([':idEnvolvido' => $idEnvolvido]);
         $idCampanha = $stmt->fetchColumn();
 
@@ -81,9 +81,21 @@ class Envolvido extends Entidade
             throw new \Exception("Você não tem permissão para remover este participante.");
         }
 
-        $sql = "DELETE FROM Envolvido WHERE idEnvolvido = :idEnvolvido";
+        $sql = "DELETE FROM Envolvidos WHERE idEnvolvido = :idEnvolvido";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':idEnvolvido' => $idEnvolvido]);
+    }
+
+    public static function salvar(Envolvido $envolvido): void
+    {
+        $pdo = Database::getConnection();
+        $sql = "INSERT INTO Envolvidos (idCampanha, idUsuario, papel) VALUES (:idCampanha, :idUsuario, :papel)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idCampanha' => $envolvido->idCampanha,
+            ':idUsuario' => $envolvido->idUsuario,
+            ':papel' => $envolvido->papel,
+        ]);
     }
 
 

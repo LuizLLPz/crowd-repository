@@ -105,6 +105,21 @@ class Recompensa extends Entidade
         $stmt->execute([':idRecompensa' => $idRecompensa]);
     }
 
+    public static function salvar(Recompensa $recompensa): void
+    {
+        $pdo = Database::getConnection();
+        $sql = "INSERT INTO Recompensa (idCampanha, nivel, nomeNivel, valorDoacao, vantagens, corRecompensa) VALUES (:idCampanha, :nivel, :nomeNivel, :valorDoacao, :vantagens, :corRecompensa)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':idCampanha' => $recompensa->idCampanha,
+            ':nivel' => $recompensa->nivel,
+            ':nomeNivel' => $recompensa->nomeNivel,
+            ':valorDoacao' => $recompensa->valorDoacao,
+            ':vantagens' => $recompensa->vantagens,
+            ':corRecompensa' => $recompensa->corRecompensa,
+        ]);
+    }
+
 
 
 }
