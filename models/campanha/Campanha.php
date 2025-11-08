@@ -37,6 +37,7 @@ class Campanha extends Entidade
     public bool $isPrivada = false;
     public int $qtdDenuncias;
     public ?string $dataFinal = null;
+    public bool $hasDoacoes = false;
     public static function buscar_campanhas(?bool $administrador = false, ?string $pesquisa = null, ?int $idCategoria = null, ?int $idUsuario = null, ?int $filtroAdministrador = null, ?int $idUsuarioApoiador = null): array {
         $pdo = Database::getConnection();
 
