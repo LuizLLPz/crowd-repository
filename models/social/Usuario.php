@@ -52,7 +52,7 @@ class Usuario extends Entidade
     public static function buscar_usuario(int $idUsuario): Usuario
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT U.*, U.funcao, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
+        $stmt = $pdo->prepare("SELECT U.*, '' as codigoVerificacao, U.funcao, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
         $stmt->execute([':idUsuario' => $idUsuario]);
         $usuarioData = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -102,13 +102,6 @@ class Usuario extends Entidade
         return $usuario;
     }
 
-    public static function buscarUsuarios(): array
-    {
-        $pdo = Database::getConnection();
-        $stmt = $pdo->query("SELECT * FROM Usuario");
-
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
 
     public static function buscar_usuarios(): array
     {
@@ -161,9 +154,6 @@ class Usuario extends Entidade
 
         return $usuarios;
     }
-
-
-
 
     public static function buscar_usuario_por_stripe_account_id(string $stripeAccountId): Usuario|false
     {
