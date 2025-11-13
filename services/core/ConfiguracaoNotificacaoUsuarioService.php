@@ -37,9 +37,9 @@ class ConfiguracaoNotificacaoUsuarioService
         return $configuracoesFormatadas;
     }
 
-    public static function salvar(int $idUsuario, array $configs): bool
+    public static function salvar(int $idUsuario, array $configs): void
     {
-        return ConfiguracaoNotificacaoUsuario::salvarConfiguracoes($idUsuario, $configs);
+        ConfiguracaoNotificacaoUsuario::salvarConfiguracoes($idUsuario, $configs);
     }
 
     public static function gerarPermissoesNotificacaoParaNovoUsuario(int $idUsuario): void

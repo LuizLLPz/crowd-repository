@@ -54,7 +54,7 @@ $result) {
         return $results;
     }
 
-    public static function salvarConfiguracoes(int $idUsuario, array $configs): bool
+    public static function salvarConfiguracoes(int $idUsuario, array $configs): void
     {
         $pdo = Database::getConnection();
         $sql = "
@@ -67,7 +67,6 @@ $result) {
         $stmt = $pdo->prepare($sql);
 
         try {
-            $pdo->beginTransaction();
             foreach ($configs as $config) {
                 $stmt->execute([
                     ':idUsuario' => $idUsuario,
@@ -76,10 +75,8 @@ $result) {
                     ':enviaPopup' => (int)$config->enviaPopup,
                 ]);
             }
-            return true;
         } catch (\Exception $e) {
-            error_log("Erro ao salvar configurações de notificação: " . $e->getMessage());
-            return false;
+            throw new \Exception("Erro ao salvar configurações de notificação: " . $e->getMessage());
         }
     }
 

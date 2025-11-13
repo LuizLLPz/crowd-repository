@@ -49,10 +49,16 @@ class Usuario extends Entidade
         $this->$name = $value;
     }
 
-    public static function buscar_usuario(int $idUsuario): Usuario
+    public static function buscar_usuario(int $idUsuario, ?bool $buscaCodigo = false): Usuario
     {
         $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT U.*, '' as codigoVerificacao, U.funcao, U.tutorial_concluido, C.titulo AS descricaoCargo FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario");
+        $sql = "SELECT U.*, U.funcao, U.tutorial_concluido, C.titulo AS descricaoCargo ";
+        if ($buscaCodigo) {
+            $sql .= ", U.codigoVerificacao, U.expiracaoCodigo ";
+        }
+        $sql .= "FROM Usuario U LEFT JOIN Cargo C ON C.id = U.idCargo WHERE idUsuario = :idUsuario";
+        $stmt = $pdo->prepare($sql);
+
         $stmt->execute([':idUsuario' => $idUsuario]);
         $usuarioData = $stmt->fetch(\PDO::FETCH_ASSOC);
 

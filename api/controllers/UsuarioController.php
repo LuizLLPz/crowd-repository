@@ -78,7 +78,8 @@ class UsuarioController extends ControllerBase
     #[HttpPost('/verificarConta')]
     public function verificar_conta(Usuario $usuario): void
     {
-        $resultado = Usuario::buscar_usuario($usuario->idUsuario);
+        $resultado = Usuario::buscar_usuario($usuario->idUsuario, buscaCodigo: true);
+
         $agora = new \DateTime();
 
         if ($resultado->codigoVerificacao !== $usuario->codigoVerificacao) {

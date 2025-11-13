@@ -36,12 +36,7 @@ class ConfiguracaoNotificacaoUsuarioController extends ControllerBase
             Http::HttpResponse(400, 'JSON inválido');
         }
 
-        $sucesso = ConfiguracaoNotificacaoUsuarioService::salvar($idUsuario, $configs);
+        ConfiguracaoNotificacaoUsuarioService::salvar($idUsuario, $configs);
 
-        if ($sucesso) {
-            Http::HttpResponse(200, 'Configurações salvas com sucesso');
-        } else {
-            Http::HttpResponse(500, 'Falha ao salvar as configurações');
-        }
     }
 }
